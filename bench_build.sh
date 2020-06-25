@@ -24,7 +24,7 @@ NR_THREADS=4
 
 > cmake_dynamic_benchmark_list.txt
 
-if [[ $REMOTE_SOURCE ]]
+if [ $REMOTE_SOURCE = true ]
 then
     sudo mkdir -p /media/Projects/
     trap "fusermount -qu /media/Projects/" EXIT

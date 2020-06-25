@@ -4,7 +4,7 @@ export ROOT_DIR=${PWD}
 
 export REMOTE_SOURCE=false
 
-if [[ $REMOTE_SOURCE ]]
+if [ $REMOTE_SOURCE = true ]
 then
     export SOURCE_DIR=/media/Projects/PhD_temperature/root_distro/home-user-boards/home/user/projects/source
 else
