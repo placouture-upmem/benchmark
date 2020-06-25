@@ -2,7 +2,14 @@ export HOSTNAME=${HOSTNAME}
 
 export ROOT_DIR=${PWD}
 
-export SOURCE_DIR=${ROOT_DIR}/source
+export REMOTE_SOURCE=false
+
+if [[ $REMOTE_SOURCE ]]
+then
+    export SOURCE_DIR=/media/Projects/PhD_temperature/root_distro/home-user-boards/home/user/projects/source
+else
+    export SOURCE_DIR=${ROOT_DIR}/source
+fi
 
 export LOGTRACE_DIR=${ROOT_DIR}/logtrace
 
@@ -11,7 +18,8 @@ export BENCH_INSTALL_DIR=${ROOT_DIR}/bench_install
 
 mkdir -p ${LOGTRACE_DIR}
 
-export PROJECT_NODE_ROOT="\${HOME}"
+export PROJECT_NODE_ROOT="/Users/willy"
+export PATH_PROJECT=${PROJECT_NODE_ROOT}/Data/Projects/
 export PATH_RESULTS=${PROJECT_NODE_ROOT}/Data/PhD_temperature_results/raw/
 
 export REMOTE_USER=willy

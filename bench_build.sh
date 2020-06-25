@@ -12,17 +12,24 @@ while getopts "c" o; do
     esac
 done
 
-CC=gcc
-CXX=g++
+# CC=gcc
+# CXX=g++
 
 # CC=clang
 # CXX=clang++
 
-# on odroid-xu{3,4} f0 is big cluster
+# on odroid-xu{3,4} f0 is the big cluster
 PREFIX_CMD="taskset f0"
 NR_THREADS=4
 
 > cmake_dynamic_benchmark_list.txt
+
+if [[ $REMOTE_SOURCE ]]
+then
+    sudo mkdir -p /media/Projects/
+    trap "fusermount -qu /media/Projects/" EXIT
+    sshfs -o cache=no,allow_other,StrictHostKeyChecking=no,ro willy@project-node:${PATH_PROJECT} /media/Projects/
+fi
 
 (
     mkdir -p ${BENCH_BUILD_DIR}
