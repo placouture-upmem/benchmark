@@ -15,7 +15,7 @@ void print_array(size_t *arr_ptr, size_t nr_elements,
 {
 	bool print_sequence = false;
 	size_t virtual_cache_line = 0;
-	
+
 	printf("print array:\n");
 	for (size_t i = 0; i < nr_elements; ++i) {
 		if ((i % (CACHE_LINE_SIZE / sizeof(size_t)) == 0)) {
@@ -25,7 +25,7 @@ void print_array(size_t *arr_ptr, size_t nr_elements,
 		printf("%04zu, ", arr_ptr[i]);
 	}
 	printf("\n");
-	
+
 	if (print_sequence) {
 		printf("print sequence of size %zu * %zu:\n", nr_iter, nr_iter_2);
 		size_t in_array = 0;
@@ -47,7 +47,7 @@ int verify_array(size_t *arr_ptr, size_t nr_elements, size_t stride)
 	bool finished = false;
 
 	size_t* verif = (size_t *) calloc(nr_elements, sizeof(size_t));
-   
+
 	while (!finished) {
 		verif[idx] = verif[idx] + 1;
 		counter++;
@@ -105,12 +105,12 @@ unsigned get_bitmask(size_t bits)
 }
 
 size_t init_page(size_t *arr_n_ptr, size_t page_offset, size_t nr_cache_lines)
-{	
+{
 #ifdef DEBUG
 	printf("\n== init_page: offset = %zu, nr_cache_lines = %zu\n\n",
 	       page_offset, nr_cache_lines);
 #endif /* DEBUG */
-	
+
 	size_t lfsr = 0x1;
 	unsigned mask = get_bitmask(6);
 
@@ -119,7 +119,7 @@ size_t init_page(size_t *arr_n_ptr, size_t page_offset, size_t nr_cache_lines)
 	for (size_t idx = 1; idx < nr_cache_lines; ++idx) {
 		size_t bit = 0;
 		bit = ((lfsr >> 1) & mask) ^ ((lfsr >> 2) & mask) ^ ((lfsr >> 4) & mask) ^ ((lfsr >> 5) & mask);
-		
+
 		lfsr = ((lfsr << 1) & mask) | (bit & 0x1);
 
 		bucket[idx] = lfsr;
@@ -137,7 +137,7 @@ size_t init_page(size_t *arr_n_ptr, size_t page_offset, size_t nr_cache_lines)
 		for (size_t idx_ = 0; idx_ < nr_cache_lines; ++idx_) {
 			if (idx == idx_)
 				continue;
-			
+
 			if (bucket[idx] == bucket[idx_]) {
 				period = idx_ - idx;
 				goto out;
@@ -149,7 +149,7 @@ out:
 	printf("period = %zu\n", period);
 #endif /* DEBUG_LFSR */
 #endif /* DEBUG */
-	
+
 	size_t last_idx = page_offset;
 	for (size_t idx = 0; idx < nr_cache_lines - 1; ++idx) {
 		size_t random_cache_line = bucket[idx];
@@ -182,7 +182,7 @@ size_t init_array(size_t* arr_n_ptr, size_t nr_elements, size_t stride)
 		stride = CACHE_LINE_SIZE / sizeof(size_t);
 
 		size_t nr_pages = (nr_elements * sizeof(size_t)) / PAGE_SIZE;
-		
+
 		size_t nr_cache_lines_per_page = PAGE_SIZE / CACHE_LINE_SIZE;
 		size_t nr_elements_per_page = PAGE_SIZE / sizeof(size_t);
 		size_t nr_remain_elements = (nr_elements - (nr_pages * nr_elements_per_page));
@@ -233,7 +233,7 @@ size_t init_array(size_t* arr_n_ptr, size_t nr_elements, size_t stride)
 
 		arr_n_ptr[last_idx] = 0;
 	}
-	
+
 #ifdef DEBUG
 	printf("\n\n");
 
@@ -241,7 +241,7 @@ size_t init_array(size_t* arr_n_ptr, size_t nr_elements, size_t stride)
 	printf("It's not an easy task to find the right polynomial to match all period for a partial memory page.\n");
 	printf("Check manualy for correctness on the last page.\n");
 	printf("There is already a nice polynomial for a 64 bytes cache lines per 4096 bytes page size.\n\n");
-	
+
 	return verify_array(arr_n_ptr, nr_elements, stride);
 #else
 	return 0;
