@@ -200,7 +200,6 @@ int main(int argc, char *argv[]) {
 
 	__asm__ volatile ("# critical in"); /* clang mess up location */
 	for (size_t iter_2 = nr_iter_2; iter_2 > 0; --iter_2) {
-format(`
 #if defined(__unroll_critical__)
 /* beware L1-icache size */
 #if defined(__clang__)
@@ -209,7 +208,7 @@ format(`
 int const unroll_fact = UNROLL;
 #pragma GCC unroll unroll_fact
 #endif /* defined(__clang__) */
-#endif /* defined(__unroll_cl__) */')
+#endif /* defined(__unroll_cl__) */
 		for (size_t iter = nr_iter; iter > 0; --iter) {
 			forloop(`i', `1', ACCESS_REQ, `format(`idx_in_array_%d = arr_n_ptr_%d[idx_in_array_%d];
 			', i, i, i)')
