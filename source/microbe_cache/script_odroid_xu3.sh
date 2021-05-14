@@ -48,9 +48,11 @@ function run_benchmark()
 	mkdir -p ${LOGTRACE_DIR}/${id_run}
 	cd ${LOGTRACE_DIR}/${id_run}
 
-	echo "${lf},${bf},${mf},${taskmap} ${config}"
-	echo "${lf},${bf},${mf},${taskmap}" > configuration.csv
 	set -- $config
+
+	echo "${lf},${bf},${mf},${taskmap} ${config}"
+	echo "${id_run},${bench},$1,$2,$3,$4,${lf},${bf},${mf},${taskmap}" > configuration.csv
+
 	sudo bash -c "echo performance > /sys/devices/system/cpu/cpufreq/policy0/scaling_governor"
 	sudo bash -c "echo ${lf} > /sys/devices/system/cpu/cpufreq/policy0/scaling_max_freq"
 	sudo bash -c "echo performance > /sys/devices/system/cpu/cpufreq/policy4/scaling_governor"
@@ -83,7 +85,7 @@ function run_benchmark()
 	sudo bash -c "echo \"0\" > /sys/class/devfreq/soc\:bus-wcore/trans_stat"
 	cat /sys/class/devfreq/soc\:bus-wcore/trans_stat > before_gpu.txt
 
-	taskset ${taskmap} ${ROOT_DIR}/bench_install/bin/${bench} $1 $2 $3 $4 $lf ${LOGTRACE_DIR} ${id_run} > output.txt
+	taskset ${taskmap} ${ROOT_DIR}/bench_install/bin/${bench} $1 $2 $3 $4 $freq ${LOGTRACE_DIR} ${id_run} > output.txt
 
 	sudo dmesg -c > after_dmesg.txt
 
@@ -133,7 +135,7 @@ nr_run=1
 
 benchs=(
     microbe_cache_local_iterator_1
-    microbe_cache_local_iterator_2
+    # microbe_cache_local_iterator_2
     # microbe_cache_local_iterator_3
     # microbe_cache_local_iterator_4
     # microbe_cache_local_iterator_5
@@ -146,7 +148,7 @@ benchs=(
     # microbe_cache_local_iterator_12
 
     microbe_cache_global_iterator_1
-    microbe_cache_global_iterator_2
+    # microbe_cache_global_iterator_2
     # microbe_cache_global_iterator_2
     # microbe_cache_global_iterator_3
     # microbe_cache_global_iterator_4
@@ -234,6 +236,7 @@ do
 		do
 		    for idx_run in $(seq 1 ${nr_run})
 		    do
+			freq=$lf
 			run_benchmark
 			id_run=$((id_run + 1))
 		    done
@@ -305,6 +308,7 @@ do
 		do
 		    for idx_run in $(seq 1 ${nr_run})
 		    do
+			freq=$bf
 			run_benchmark
 			id_run=$((id_run + 1))
 		    done
