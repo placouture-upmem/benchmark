@@ -1,8 +1,11 @@
 cmake_minimum_required(VERSION 3.13)
-include(CheckIPOSupported)
-check_ipo_supported(RESULT ipo_supported OUTPUT output)
+project("microbe_cache")
 
-# set(arch -marm -mcpu=cortex-a15 -mfpu=neon-vfpv4 -mfloat-abi=hard)
+# include(CheckIPOSupported)
+# check_ipo_supported(RESULT ipo_supported OUTPUT output)
+
+set(nr_access_req 4)
+
 set(optim -O3
   # -funroll-loops
   )
@@ -28,7 +31,7 @@ set(compile_definitions
 
   )
 
-foreach(x RANGE 1 12)
+foreach(x RANGE 1 ${nr_access_req})
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_local_iterator.${x}.c
     COMMAND m4
@@ -53,7 +56,7 @@ foreach(x RANGE 1 12)
     RUNTIME DESTINATION bin)
 endforeach()
 
-foreach(x RANGE 1 12)
+foreach(x RANGE 1 ${nr_access_req})
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_global_iterator.${x}.c
     COMMAND m4
