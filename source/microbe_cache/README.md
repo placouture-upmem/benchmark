@@ -5,6 +5,14 @@
 This microbenchmark is useful to discover cache hierarchy and its latency.
 The benchmark do a pointer chasing over an array. The array is initialised to perform a sequential access with parametrised stride (stide >= 1), or a random pattern (stride = 0). The random pattern is generated using an LSFR pseudo random number generator that fit in a memory page.
 
+There are multiple version of the benchmark:
+
+```microbe_cache_local_iterator_X``` : access ```X``` different arrays, each has its own allocator. Iterators are local to the function, hence uses the stack. You can set ```X``` to fit in registers. If there are not enough registers, there will be stores/loads on the stack to manage the iterator.
+
+```microbe_cache_global_iterator_X``` : access ```X``` different arrays, each has its own allocator. Iterators are in the global scope (.dss). There will be most probably stores/loads to manage iterators.
+
+```microbe_cache_<location>_iterator_T_X``` : same as before, but with ```T``` threads. Be carefull about <array_size> parameter, as each single array has its own allocator. Set their sizes as to have them all fitting in the RAM to not swap. Threading is implemented with ```pthread```.
+
 ## Run the benchmark
 
 The input of the benchmark is:
@@ -56,4 +64,4 @@ The generated .c file has different compilation definition.
 * `-DUNROLL=64` is the loop unroll factor for the critical loop. Be careful with this variable. It is used to maximise the number of memory access against loop iterator calculation and branch instruction. It's nice to have the assembly code fitting in the instruction cache to not cache miss on it. The source code is written to support both gcc and clang unroll #pragma
 * `-DLOCAL_ITERATOR` or `-DGLOBAL_ITERATOR` is used to have the iterator placed in either the local scope of the function (stack), or as a global (.data). With a local allocation, you could end up with only load instruction, and with a global allocation, you will probably have some store instruction. This compiler definition is helpful to stress (a bit) in-order/out-of-order pipeline and write-back stage.
 
-See `CMakeLists.txt` and `microbe_cache.c.m4` for more detail.
+See `CMakeLists.txt`, `microbe_cache.c.m4` and `microbe_cache_threaded.c.m4` for more detail.

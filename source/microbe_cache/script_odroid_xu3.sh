@@ -135,7 +135,7 @@ nr_run=1
 
 benchs=(
     microbe_cache_local_iterator_1
-    # microbe_cache_local_iterator_2
+    microbe_cache_local_iterator_2
     # microbe_cache_local_iterator_3
     # microbe_cache_local_iterator_4
     # microbe_cache_local_iterator_5
@@ -147,9 +147,40 @@ benchs=(
     # microbe_cache_local_iterator_11
     # microbe_cache_local_iterator_12
 
+    microbe_cache_local_iterator_1_1
+    microbe_cache_local_iterator_1_2
+    # microbe_cache_local_iterator_1_3
+    # microbe_cache_local_iterator_1_4
+    # microbe_cache_local_iterator_1_5
+    # microbe_cache_local_iterator_1_6
+    # microbe_cache_local_iterator_1_7
+
+    microbe_cache_local_iterator_2_1
+    microbe_cache_local_iterator_2_2
+    # microbe_cache_local_iterator_2_3
+    # microbe_cache_local_iterator_2_4
+    # microbe_cache_local_iterator_2_5
+    # microbe_cache_local_iterator_2_6
+    # microbe_cache_local_iterator_2_7
+
+    microbe_cache_local_iterator_3_1
+    microbe_cache_local_iterator_3_2
+    # microbe_cache_local_iterator_3_3
+    # microbe_cache_local_iterator_3_4
+    # microbe_cache_local_iterator_3_5
+    # microbe_cache_local_iterator_3_6
+    # microbe_cache_local_iterator_3_7
+
+    microbe_cache_local_iterator_4_1
+    microbe_cache_local_iterator_4_2
+    # microbe_cache_local_iterator_4_3
+    # microbe_cache_local_iterator_4_4
+    # microbe_cache_local_iterator_4_5
+    # microbe_cache_local_iterator_4_6
+    # microbe_cache_local_iterator_4_7
+
     microbe_cache_global_iterator_1
-    # microbe_cache_global_iterator_2
-    # microbe_cache_global_iterator_2
+    microbe_cache_global_iterator_2
     # microbe_cache_global_iterator_3
     # microbe_cache_global_iterator_4
     # microbe_cache_global_iterator_5
@@ -160,6 +191,38 @@ benchs=(
     # microbe_cache_global_iterator_10
     # microbe_cache_global_iterator_11
     # microbe_cache_global_iterator_12
+
+    microbe_cache_global_iterator_1_1
+    microbe_cache_global_iterator_1_2
+    # microbe_cache_global_iterator_1_3
+    # microbe_cache_global_iterator_1_4
+    # microbe_cache_global_iterator_1_5
+    # microbe_cache_global_iterator_1_6
+    # microbe_cache_global_iterator_1_7
+
+    microbe_cache_global_iterator_2_1
+    microbe_cache_global_iterator_2_2
+    # microbe_cache_global_iterator_2_3
+    # microbe_cache_global_iterator_2_4
+    # microbe_cache_global_iterator_2_5
+    # microbe_cache_global_iterator_2_6
+    # microbe_cache_global_iterator_2_7
+
+    microbe_cache_global_iterator_3_1
+    microbe_cache_global_iterator_3_2
+    # microbe_cache_global_iterator_3_3
+    # microbe_cache_global_iterator_3_4
+    # microbe_cache_global_iterator_3_5
+    # microbe_cache_global_iterator_3_6
+    # microbe_cache_global_iterator_3_7
+
+    microbe_cache_global_iterator_4_1
+    microbe_cache_global_iterator_4_2
+    # microbe_cache_global_iterator_4_3
+    # microbe_cache_global_iterator_4_4
+    # microbe_cache_global_iterator_4_5
+    # microbe_cache_global_iterator_4_6
+    # microbe_cache_global_iterator_4_7
 )
 
 mem_freq=(
@@ -213,7 +276,9 @@ big_freq=(
 )
 
 configuration_little=(
-    "33554432 0 8161932 10"
+    "16777216 0 8161932 10"
+
+    # "33554432 0 8161932 10"
     # "1048576 0 8161932 10"
     # "160100 0 23402925 10"
     # "131072 0 44793033 10"
@@ -221,7 +286,7 @@ configuration_little=(
     # "4 0 463492975 10"
 )
 
-taskmap=0x08
+taskmap=0x0f
 
 for bench in "${benchs[@]}"
 do
@@ -286,7 +351,9 @@ big_freq=(
 )
 
 configuration_big=(
-    "33554432 0 8161932 10"
+    "16777216 0 8161932 10"
+
+    # "33554432 0 8161932 10"
     # "1048576 0 9555113 10"
     # "160100 0 88541805 10"
     # "131072 0 88541805 10"
@@ -294,7 +361,7 @@ configuration_big=(
     # "4 0 496571176 10"
 )
 
-taskmap=0x80
+taskmap=0xf0
 
 for bench in "${benchs[@]}"
 do
