@@ -19,7 +19,7 @@ void print_array(size_t *arr_ptr, size_t nr_elements,
 	printf("print array:\n");
 	for (size_t i = 0; i < nr_elements; ++i) {
 		if ((i % (CACHE_LINE_SIZE / sizeof(size_t)) == 0)) {
-			printf("\n%04zu => %04zu:", virtual_cache_line, i);
+			printf("\n%04zu => %04zu: ", virtual_cache_line, i);
 			virtual_cache_line++;
 		}
 		printf("%04zu, ", arr_ptr[i]);
@@ -39,7 +39,7 @@ void print_array(size_t *arr_ptr, size_t nr_elements,
 	}
 }
 
-int verify_array(size_t *arr_ptr, size_t nr_elements, size_t stride)
+int verify_array(size_t *arr_ptr, size_t nr_elements)
 {
 	size_t idx = 0;
 	size_t counter = 0;
@@ -59,30 +59,18 @@ int verify_array(size_t *arr_ptr, size_t nr_elements, size_t stride)
 
 	bool error = false;
 
+	size_t stride = CACHE_LINE_SIZE / sizeof(size_t);
+
 	for (size_t i = 0; i < nr_elements; i += stride) {
 		if (verif[i] != 1) {
-#ifdef DEBUG
 			fprintf(stderr, "Error at Element [%zu], accessed %zu times\n",
 				i, verif[i]);
-#endif /* DEBUG */
 			error = true;
 		}
 	}
 	free(verif);
 
-	if (counter == (nr_elements / stride) && !error) {
-#ifdef DEBUG
-		fprintf(stderr,"Array verified\n\n");
-#endif /* DEBUG */
-		return 0;
-	} else {
-		fprintf(stderr,"Error: Array size:%zu, Stride size:%zu, Loops in:%zu (wants to loop in %zu)\n\n",
-			nr_elements,
-			stride,
-			counter,
-			nr_elements / stride);
-		return -1;
-	}
+	return error ? -1 : 0;
 }
 
 void show_bits(size_t val)
@@ -167,19 +155,16 @@ out:
 	return last_idx;
 }
 
-size_t init_array(size_t* arr_n_ptr, size_t nr_elements, size_t stride)
+void init_array(size_t* arr_n_ptr, size_t nr_elements, size_t stride)
 {
 	if (stride != 0) {
 		for (size_t i = 0; i < nr_elements; i++) {
 			arr_n_ptr[i % nr_elements] = (i + stride) % nr_elements;
 		}
 	} else {
-
 #ifdef DEBUG
 		printf("\n\n== ramdomise array\n");
 #endif /* DEBUG */
-
-		stride = CACHE_LINE_SIZE / sizeof(size_t);
 
 		size_t nr_pages = (nr_elements * sizeof(size_t)) / PAGE_SIZE;
 
@@ -233,17 +218,4 @@ size_t init_array(size_t* arr_n_ptr, size_t nr_elements, size_t stride)
 
 		arr_n_ptr[last_idx] = 0;
 	}
-
-#ifdef DEBUG
-	printf("\n\n");
-
-	printf("If the last page is not full, we do not check it properly!\n");
-	printf("It's not an easy task to find the right polynomial to match all period for a partial memory page.\n");
-	printf("Check manualy for correctness on the last page.\n");
-	printf("There is already a nice polynomial for a 64 bytes cache lines per 4096 bytes page size.\n\n");
-
-	return verify_array(arr_n_ptr, nr_elements, stride);
-#else
-	return 0;
-#endif /* DEBUG */
 }

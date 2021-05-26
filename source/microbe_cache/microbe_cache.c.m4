@@ -123,21 +123,36 @@ int main(int argc, char *argv[]) {
 
 	unsigned int cpu_freq = atoi(argv[5]);
 
+	size_t allocation_size = array_size;
+	unsigned long long array_byte_size = 1ULL * array_size * sizeof(size_t);
+
 	if (stride == 0) {
-		size_t array_size_ = (array_size + ((CACHE_LINE_SIZE / sizeof(size_t))
-						    - (array_size % (CACHE_LINE_SIZE / sizeof(size_t)))));
-		printf("array_size rounded to fit a CACHE_LINE_SIZE from %zu to %zu\n",
-		       array_size, array_size_);
+		if (array_size % (CACHE_LINE_SIZE / sizeof(size_t))) {
+			size_t array_size_ = (array_size + ((CACHE_LINE_SIZE / sizeof(size_t))
+							    - (array_size % (CACHE_LINE_SIZE / sizeof(size_t)))));
+			printf("array_size rounded to be a multiple of CACHE_LINE_SIZE from %zu to %zu\n",
+			       array_size, array_size_);
 			array_size = array_size_;
+		}
+
+		if (array_size % (PAGE_SIZE / sizeof(size_t))) {
+			allocation_size = (array_size + ((PAGE_SIZE / sizeof(size_t))
+							 - (array_size % (PAGE_SIZE / sizeof(size_t)))));
+		} else {
+			allocation_size = array_size;
+		}
 	}
 
 	printf("sizeof(size_t) = %zu\n", sizeof(size_t));
-	printf("array_size = %zu\n", array_size);
-	unsigned long long array_byte_size = 1ULL * array_size * sizeof(size_t);
-	printf("==> %llu b; %g Kb; %g Mb\n",
-	       array_byte_size, (double) array_byte_size / 1024,
-	       (double) array_byte_size / 1024 / 1024);
+	printf("accessing array_size = %zu\n", array_size);
+	printf("allocation_size is %zu\n", allocation_size);
+
+	printf("==> %llu b; %f Kb; %f Mb\n",
+	       array_byte_size, (double) array_byte_size / 1024.,
+	       (double) array_byte_size / 1024. / 1024.);
 	// grep MemTotal /proc/meminfo to check physical memory
+	printf("==> %f page of %d\n",
+	       (double) array_byte_size / PAGE_SIZE, PAGE_SIZE);
 
 	printf("stride = %zu\n", stride);
 	printf("nr_iter = %zu\n", nr_iter);
@@ -147,12 +162,6 @@ int main(int argc, char *argv[]) {
 	printf("==> %g GHz; %g MHz; %u KHz\n",
 	       cpu_freq * 1e-6, cpu_freq * 1e-3, cpu_freq);
 
-	size_t allocation_size = array_size;
-	if (stride == 0) {
-		// To facilitate array indexation
-		allocation_size = (array_size + ((PAGE_SIZE / sizeof(size_t))
-						 - (array_size % (PAGE_SIZE / sizeof(size_t)))));
-	}
 	int ret = 0;
 
 	forloop(`i', `1', ACCESS_REQ, `format(`size_t *arr_n_ptr_%d = NULL;
@@ -170,30 +179,33 @@ int main(int argc, char *argv[]) {
 
 	ret = posix_memalign((void **)&arr_n_ptr_%d, PAGE_SIZE,
 			     allocation_size * sizeof(size_t));
+
 	if ((ret != 0) | (arr_n_ptr_%d == NULL)) {
 		char error_msg[128];
 		snprintf(error_msg, sizeof error_msg,
 			 "alloc arr_n_ptr_%d");
 		handle_error_en(ret, error_msg);
 	}
+
 	memset(arr_n_ptr_%d, 0, sizeof(*arr_n_ptr_%d));
-	if (init_array(arr_n_ptr_%d, array_size, stride)) {
+	init_array(arr_n_ptr_%d, array_size, stride);
+
+#ifdef DEBUG
+	printf("\n\n");
+
+	printf("If a page is not full, we do not check it properly! In this case, a manual check is required.\n");
+
+	if (verify_array(arr_n_ptr_%d, allocation_size) < 0) {
 		if (stride == 0)
 			print_array(arr_n_ptr_%d, allocation_size, nr_iter, nr_iter_2);
 		else
 			print_array(arr_n_ptr_%d, array_size, nr_iter, nr_iter_2);
 	}
-	', i, i, i, i, i, i, i, i, i, i, i, i, i)')
+#endif /* DEBUG */
+	', i, i, i, i, i, i, i, i, i, i, i, i, i, i)')
 
-	FILE *fd_timing = fopen("timing.csv", "w");
-	if (!fd_timing) {
-		perror("timing.csv");
-		exit(EXIT_FAILURE);
-	}
-
-	struct timespec export_time;
-	clock_gettime(CLOCK_REALTIME, &export_time);
-	fprintf(fd_timing, "%10lu%09lu,start\n", export_time.tv_sec, export_time.tv_nsec);
+	struct timespec export_time_start;
+	clock_gettime(CLOCK_REALTIME, &export_time_start);
 
 	struct timespec start;
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
@@ -219,8 +231,15 @@ int const unroll_fact = UNROLL;
 	struct timespec stop;
 	clock_gettime(CLOCK_MONOTONIC_RAW, &stop);
 
-	clock_gettime(CLOCK_REALTIME, &export_time);
-	fprintf(fd_timing, "%10lu%09lu,stop\n", export_time.tv_sec, export_time.tv_nsec);
+	struct timespec export_time_stop;
+	clock_gettime(CLOCK_REALTIME, &export_time_stop);
+
+	FILE *fd_timing = fopen("timing.csv", "w");
+	if (!fd_timing)
+		handle_perror("timing.csv");
+
+	fprintf(fd_timing, "%10lu%09lu,start\n", export_time_start.tv_sec, export_time_start.tv_nsec);
+	fprintf(fd_timing, "%10lu%09lu,stop\n", export_time_stop.tv_sec, export_time_stop.tv_nsec);
 	fclose(fd_timing);
 
 	forloop(`i', `1', ACCESS_REQ, `format(`/* print the iterator to cut its optimisation */
