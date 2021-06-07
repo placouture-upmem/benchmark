@@ -19,7 +19,9 @@ set(compile_options
   -std=c99 -Wall -Wextra -Wshadow -pedantic -Wno-unused-parameter ${optim}
   )
 
-#=> use DEBUG to check how array indexation is made
+#=> use DEBUG and DEBUG_RANDOM_BUCKET to check how array indexation is made
+#=> use GRAY of LFSR for the generated pattern
+#=> GRAY is fine for a random bucket that has 2^x a size (e.g. 1<<x)
 #=> for a dense (PAGE_SIZE:4096, CACHE_LINE_SIZE:64) on a 32bit CPU:
 #   the LFSR polynomial is already fine
 #=> fine tune the polynomial for a different configuration
@@ -29,8 +31,10 @@ set(compile_definitions
 
   PAGE_SIZE=4096 CACHE_LINE_SIZE=64
 
+  GRAY
+  # LFSR
   # DEBUG
-  # DEBUG_LFSR
+  # DEBUG_RANDOM_BUCKET
 
   )
 

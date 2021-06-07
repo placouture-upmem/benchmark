@@ -3,7 +3,7 @@
 ## Introduction
 
 This microbenchmark is useful to discover cache hierarchy and its latency.
-The benchmark do a pointer chasing over an array. The array is initialised to perform a sequential access with parametrised stride (stide >= 1), or a random pattern (stride = 0). The random pattern is generated using an LSFR pseudo random number generator that fit in a memory page.
+The benchmark do a pointer chasing over an array. The array is initialised to perform a sequential access with a parametrised stride (stide >= 1), or a random pattern (stride = 0). The random pattern is generated using either Gray code or an LSFR pseudo random number generator defined at compile time. With a random pattern, the array is accessed such as each cache line is touched only once within a memory page, then pass to the next page and so on.
 
 There are multiple version of the benchmark:
 

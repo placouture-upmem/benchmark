@@ -92,6 +92,11 @@ unsigned get_bitmask(size_t bits)
 	return mask;
 }
 
+size_t num_to_gray(size_t num)
+{
+	return num ^ (num >> 1);
+}
+
 size_t init_page(size_t *arr_n_ptr, size_t page_offset, size_t nr_cache_lines)
 {
 #ifdef DEBUG
@@ -99,10 +104,23 @@ size_t init_page(size_t *arr_n_ptr, size_t page_offset, size_t nr_cache_lines)
 	       page_offset, nr_cache_lines);
 #endif /* DEBUG */
 
+	size_t bucket[nr_cache_lines];
+
+#ifdef GRAY
+	for (size_t idx = 0; idx < nr_cache_lines; ++idx) {
+		bucket[idx] = num_to_gray(idx + 1);
+#ifdef DEBUG
+#ifdef DEBUG_RANDOM_BUCKET
+		printf("\n%zu => %zu\n", idx, bucket[idx]);
+		show_bits(bucket[idx]);
+#endif /* DEBUG_RANDOM_BUCKET */
+#endif /* DEBUG */
+	}
+#endif /* GRAY */
+
+#ifdef LFSR
 	size_t lfsr = 0x1;
 	unsigned mask = get_bitmask(6);
-
-	size_t bucket[nr_cache_lines];
 	bucket[0] = lfsr;
 	for (size_t idx = 1; idx < nr_cache_lines; ++idx) {
 		size_t bit = 0;
@@ -114,7 +132,7 @@ size_t init_page(size_t *arr_n_ptr, size_t page_offset, size_t nr_cache_lines)
 	}
 
 #ifdef DEBUG
-#ifdef DEBUG_LFSR
+#ifdef DEBUG_RANDOM_BUCKET
 	for (size_t idx = 0; idx < nr_cache_lines; ++idx) {
 		printf("bucket[%zu] = %zu =>\t\t\t", idx, bucket[idx]);
 		show_bits(bucket[idx]);
@@ -135,8 +153,9 @@ size_t init_page(size_t *arr_n_ptr, size_t page_offset, size_t nr_cache_lines)
 
 out:
 	printf("period = %zu\n", period);
-#endif /* DEBUG_LFSR */
+#endif /* DEBUG_RANDOM_BUCKET */
 #endif /* DEBUG */
+#endif /* LFSR */
 
 	size_t last_idx = page_offset;
 	for (size_t idx = 0; idx < nr_cache_lines - 1; ++idx) {
