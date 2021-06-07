@@ -212,23 +212,30 @@ int main(int argc, char *argv[]) {
 	struct timespec start;
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 
-	__asm__ volatile ("# critical in"); /* clang mess up location */
+	__asm__ volatile ("# critical in");
 	for (size_t iter_2 = nr_iter_2; iter_2 > 0; --iter_2) {
-#if defined(__unroll_critical__)
-/* beware L1-icache size */
-#if defined(__clang__)
-#pragma clang loop unroll_count(UNROLL)
-#elif defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER)
-int const unroll_fact = UNROLL;
-#pragma GCC unroll unroll_fact
-#endif /* defined(__clang__) */
-#endif /* defined(__unroll_cl__) */
-		for (size_t iter = nr_iter; iter > 0; --iter) {
+		size_t iter = nr_iter;
+
+		if (iter % UNROLL == 0) {
+		  goto unroll_none;
+		}mym4for(`unroll_idx', `1', UNROLL - 1, +1, `format(` else if (iter %% UNROLL == (UNROLL - %d)) {
+		  iter = iter - (UNROLL - %d);
+		  goto unroll_%d;
+		}', unroll_idx, unroll_idx, unroll_idx)')
+
+		mym4for(`unroll_idx', `1', UNROLL - 1, +1, `format(`
+	unroll_%d:', unroll_idx)
+		mym4for(`i', `1', ACCESS_REQ, +1, `format(`idx_in_array_%d = arr_n_ptr_%d[idx_in_array_%d];
+		', i, i, i)')')
+
+	unroll_none:
+		for (; iter > 0; iter -= UNROLL) {
+			mym4for(`unroll_idx', `0', UNROLL - 1, +1, `
 			mym4for(`i', `1', ACCESS_REQ, +1, `format(`idx_in_array_%d = arr_n_ptr_%d[idx_in_array_%d];
-			', i, i, i)')
+			', i, i, i)')')
 		}
 	}
-	__asm__ volatile ("# critical out"); /* clang mess up location */
+	__asm__ volatile ("# critical out");
 
 	struct timespec stop;
 	clock_gettime(CLOCK_MONOTONIC_RAW, &stop);

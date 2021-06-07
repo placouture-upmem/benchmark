@@ -27,8 +27,8 @@ define(mym4for,
 
 #if defined(GLOBAL_ITERATOR)
 /* if the iterator is a global, you have a store */
-mym4for(`f', `1', THREAD_COUNT, +1, `mym4for(`i', `1', ACCESS_REQ, +1, `format(`size_t idx_in_array_%d_%d = 0;
-', f, i)')')
+mym4for(`th_idx', `1', THREAD_COUNT, +1, `mym4for(`i', `1', ACCESS_REQ, +1, `format(`size_t idx_in_array_%d_%d = 0;
+', th_idx, i)')')
 #endif /* GLOBAL_ITERATOR */
 
 #define handle_perror(msg)				\
@@ -108,18 +108,19 @@ void* thread_func(void* arg)
 	struct timespec start;
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 
-	__asm__ volatile ("# critical in"); /* clang mess up location */
+	__asm__ volatile ("# critical in");
 	for (size_t iter_2 = nr_iter_2; iter_2 > 0; --iter_2) {
-#if defined(__unroll_critical__)
-/* beware L1-icache size */
-#if defined(__clang__)
-#pragma clang loop unroll_count(UNROLL)
-#elif defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER)
-		int const unroll_fact = UNROLL;
-#pragma GCC unroll unroll_fact
-#endif /* defined(__clang__) */
-#endif /* defined(__unroll_cl__) */
-		for (size_t iter = nr_iter; iter > 0; --iter) {
+		size_t iter = nr_iter;
+
+		if (iter % UNROLL == 0) {
+		  goto unroll_none;
+		}mym4for(`unroll_idx', `1', UNROLL - 1, +1, `format(` else if (iter %% UNROLL == (UNROLL - %d)) {
+		  iter = iter - (UNROLL - %d);
+		  goto unroll_%d;
+		}', unroll_idx, unroll_idx, unroll_idx)')
+
+		mym4for(`unroll_idx', `1', UNROLL - 1, +1, `format(`
+	unroll_%d:', unroll_idx)
 		#if defined(GLOBAL_ITERATOR)
 			mym4for(`i', `1', ACCESS_REQ, +1, `format(`*idx_in_array_%d = arr_n_ptr_%d[*idx_in_array_%d];
 			', i, i, i)')
@@ -129,9 +130,24 @@ void* thread_func(void* arg)
 			mym4for(`i', `1', ACCESS_REQ, +1, `format(`idx_in_array_%d = arr_n_ptr_%d[idx_in_array_%d];
 			', i, i, i)')
 		#endif /* LOCAL_ITERATOR */
+		')
+
+	unroll_none:
+		for (; iter > 0; iter -= UNROLL) {
+			mym4for(`unroll_idx', `0', UNROLL - 1, +1, `
+		#if defined(GLOBAL_ITERATOR)
+			mym4for(`i', `1', ACCESS_REQ, +1, `format(`*idx_in_array_%d = arr_n_ptr_%d[*idx_in_array_%d];
+			', i, i, i)')
+		#endif /* GLOBAL_ITERATOR */
+
+		#if defined(LOCAL_ITERATOR)
+			mym4for(`i', `1', ACCESS_REQ, +1, `format(`idx_in_array_%d = arr_n_ptr_%d[idx_in_array_%d];
+			', i, i, i)')
+		#endif /* LOCAL_ITERATOR */
+		')
 		}
 	}
-	__asm__ volatile ("# critical out"); /* clang mess up location */
+	__asm__ volatile ("# critical out");
 
 	struct timespec stop;
 	clock_gettime(CLOCK_MONOTONIC_RAW, &stop);
@@ -287,7 +303,7 @@ int main(int argc, char *argv[]) {
 
 	int ret = 0;
 
-	mym4for(`f', `1', THREAD_COUNT, +1, `mym4for(`i', `1', ACCESS_REQ, +1, `format(`
+	mym4for(`th_idx', `1', THREAD_COUNT, +1, `mym4for(`i', `1', ACCESS_REQ, +1, `format(`
 	size_t *arr_n_ptr_%d_%d = NULL;
 
 	arr_n_ptr_%d_%d = (size_t *) malloc(allocation_size * sizeof(size_t));
@@ -318,32 +334,32 @@ int main(int argc, char *argv[]) {
 			print_array(arr_n_ptr_%d_%d, array_size, nr_iter, nr_iter_2);
 	}
 #endif /* DEBUG */
-	', f, i, f, i, f, i, f, i, f, i, f, i, f, i, f, i, f, i, f, i, f, i, f, i)')')
+	', th_idx, i, th_idx, i, th_idx, i, th_idx, i, th_idx, i, th_idx, i, th_idx, i, th_idx, i, th_idx, i, th_idx, i, th_idx, i, th_idx, i)')')
 
 	pthread_barrier_t barrier;
 	pthread_barrier_init(&barrier, NULL, THREAD_COUNT + 1);
 
-	mym4for(`f', `1', THREAD_COUNT, +1, `format(`
+	mym4for(`th_idx', `1', THREAD_COUNT, +1, `format(`
 	pthread_t thread_%d;
 	struct thread_info tinfo_%d;
 	tinfo_%d.barrier = &barrier;
 	tinfo_%d.thread_id = %d;
 	tinfo_%d.nr_iter_2 = nr_iter_2;
 	tinfo_%d.nr_iter = nr_iter;
-	', f, f, f, f, f, f, f)')
+	', th_idx, th_idx, th_idx, th_idx, th_idx, th_idx, th_idx)')
 
-	mym4for(`f', `1', THREAD_COUNT, +1, `mym4for(`i', `1', ACCESS_REQ, +1, `format(`tinfo_%d.arr_n_ptr_%d = arr_n_ptr_%d_%d;
-	', f, i, f, i)')')
+	mym4for(`th_idx', `1', THREAD_COUNT, +1, `mym4for(`i', `1', ACCESS_REQ, +1, `format(`tinfo_%d.arr_n_ptr_%d = arr_n_ptr_%d_%d;
+	', th_idx, i, th_idx, i)')')
 
 #if defined(GLOBAL_ITERATOR)
-	mym4for(`f', `1', THREAD_COUNT, +1, `mym4for(`i', `1', ACCESS_REQ, +1, `format(`tinfo_%d.idx_in_array_%d = &idx_in_array_%d_%d;
-	', f, i, f, i)')')
+	mym4for(`th_idx', `1', THREAD_COUNT, +1, `mym4for(`i', `1', ACCESS_REQ, +1, `format(`tinfo_%d.idx_in_array_%d = &idx_in_array_%d_%d;
+	', th_idx, i, th_idx, i)')')
 #endif /* GLOBAL_ITERATOR */
 
-	mym4for(`f', `1', THREAD_COUNT, +1, `format(`
+	mym4for(`th_idx', `1', THREAD_COUNT, +1, `format(`
 	if ((ret = pthread_create(&thread_%d, NULL, thread_func, &tinfo_%d)) != 0)
 		handle_error_en(ret, "pthread_create thread_%d");
-	', f, f, f)')
+	', th_idx, th_idx, th_idx)')
 
 	pthread_barrier_wait(&barrier);
 
@@ -374,13 +390,13 @@ int main(int argc, char *argv[]) {
 	fprintf(fd_timing, "%10lu%09lu,stop\n", export_time_stop.tv_sec, export_time_stop.tv_nsec);
 	fclose(fd_timing);
 
-	mym4for(`f', `1', THREAD_COUNT, +1, `format(`
+	mym4for(`th_idx', `1', THREAD_COUNT, +1, `format(`
 	if ((ret = pthread_join(thread_%d, NULL)) != 0)
 		handle_error_en(ret, "pthread_join thread_%d");
-	', f, f)')
+	', th_idx, th_idx)')
 
-	mym4for(`f', `1', THREAD_COUNT, +1, `mym4for(`i', `1', ACCESS_REQ, +1, `format(`free(arr_n_ptr_%d_%d);
-	', f, i)')')
+	mym4for(`th_idx', `1', THREAD_COUNT, +1, `mym4for(`i', `1', ACCESS_REQ, +1, `format(`free(arr_n_ptr_%d_%d);
+	', th_idx, i)')')
 
 	unsigned long long start_ = start.tv_sec * 1000000000ULL + start.tv_nsec;
 	unsigned long long stop_ = stop.tv_sec * 1000000000ULL + stop.tv_nsec;

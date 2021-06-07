@@ -10,10 +10,11 @@ find_package(Threads REQUIRED)
 set(nr_thread 4)
 set(nr_access_req 2)
 
-set(optim
-  -O3
-  # -funroll-loops
-  )
+# minimal unroll_factor must be 1
+# maximal depends on L1i cache size
+set(unroll_factor 8)
+
+set(optim -O3)
 set(compile_options
   -std=c99 -Wall -Wextra -Wshadow -pedantic -Wno-unused-parameter ${optim}
   )
@@ -24,9 +25,6 @@ set(compile_options
 #=> fine tune the polynomial for a different configuration
 
 set(compile_definitions
-  __unroll_critical__
-  UNROLL=64
-
   _POSIX_C_SOURCE=200112L
 
   PAGE_SIZE=4096 CACHE_LINE_SIZE=64
@@ -40,7 +38,7 @@ foreach(acces_req RANGE 1 ${nr_access_req})
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_local_iterator_${acces_req}.c
     COMMAND m4
-    ARGS -DACCESS_REQ=${acces_req} ${CMAKE_CURRENT_SOURCE_DIR}/microbe_cache.c.m4 > ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_local_iterator_${acces_req}.c
+    ARGS -DUNROLL=${unroll_factor} -DACCESS_REQ=${acces_req} ${CMAKE_CURRENT_SOURCE_DIR}/microbe_cache.c.m4 > ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_local_iterator_${acces_req}.c
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/microbe_cache.c.m4
     VERBATIM)
   set(sources microbe_cache_local_iterator_${acces_req}.c)
@@ -65,7 +63,7 @@ foreach(acces_req RANGE 1 ${nr_access_req})
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_global_iterator_${acces_req}.c
     COMMAND m4
-    ARGS -DACCESS_REQ=${acces_req} ${CMAKE_CURRENT_SOURCE_DIR}/microbe_cache.c.m4 > ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_global_iterator_${acces_req}.c
+    ARGS -DUNROLL=${unroll_factor} -DACCESS_REQ=${acces_req} ${CMAKE_CURRENT_SOURCE_DIR}/microbe_cache.c.m4 > ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_global_iterator_${acces_req}.c
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/microbe_cache.c.m4
     VERBATIM)
   set(sources microbe_cache_global_iterator_${acces_req}.c)
@@ -91,7 +89,7 @@ foreach(thread_count RANGE 1 ${nr_thread})
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_local_iterator_threaded_${thread_count}_${acces_req}.c
       COMMAND m4
-      ARGS -DTHREAD_COUNT=${thread_count} -DACCESS_REQ=${acces_req} ${CMAKE_CURRENT_SOURCE_DIR}/microbe_cache_threaded.c.m4 > ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_local_iterator_threaded_${thread_count}_${acces_req}.c
+      ARGS -DUNROLL=${unroll_factor} -DTHREAD_COUNT=${thread_count} -DACCESS_REQ=${acces_req} ${CMAKE_CURRENT_SOURCE_DIR}/microbe_cache_threaded.c.m4 > ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_local_iterator_threaded_${thread_count}_${acces_req}.c
       DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/microbe_cache_threaded.c.m4
       VERBATIM)
     set(sources microbe_cache_local_iterator_threaded_${thread_count}_${acces_req}.c)
@@ -118,7 +116,7 @@ foreach(thread_count RANGE 1 ${nr_thread})
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_global_iterator_threaded_${thread_count}_${acces_req}.c
       COMMAND m4
-      ARGS -DTHREAD_COUNT=${thread_count} -DACCESS_REQ=${acces_req} ${CMAKE_CURRENT_SOURCE_DIR}/microbe_cache_threaded.c.m4 > ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_global_iterator_threaded_${thread_count}_${acces_req}.c
+      ARGS -DUNROLL=${unroll_factor} -DTHREAD_COUNT=${thread_count} -DACCESS_REQ=${acces_req} ${CMAKE_CURRENT_SOURCE_DIR}/microbe_cache_threaded.c.m4 > ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_global_iterator_threaded_${thread_count}_${acces_req}.c
       DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/microbe_cache_threaded.c.m4
       VERBATIM)
     set(sources microbe_cache_global_iterator_threaded_${thread_count}_${acces_req}.c)
