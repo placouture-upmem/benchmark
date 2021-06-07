@@ -8,9 +8,10 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
 set(nr_thread 4)
-set(nr_access_req 7)
+set(nr_access_req 2)
 
-set(optim -O3
+set(optim
+  -O3
   # -funroll-loops
   )
 set(compile_options
@@ -35,15 +36,15 @@ set(compile_definitions
 
   )
 
-foreach(x RANGE 1 ${nr_access_req})
+foreach(acces_req RANGE 1 ${nr_access_req})
   add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_local_iterator.${x}.c
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_local_iterator_${acces_req}.c
     COMMAND m4
-    ARGS -I/usr/share/doc/m4/examples/ -D ACCESS_REQ=${x} ${CMAKE_CURRENT_SOURCE_DIR}/microbe_cache.c.m4 > ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_local_iterator.${x}.c
+    ARGS -I/usr/share/doc/m4/examples/ -DACCESS_REQ=${acces_req} ${CMAKE_CURRENT_SOURCE_DIR}/microbe_cache.c.m4 > ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_local_iterator_${acces_req}.c
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/microbe_cache.c.m4
     VERBATIM)
-  set(sources microbe_cache_local_iterator.${x}.c)
-  set(target "microbe_cache_local_iterator_${x}")
+  set(sources microbe_cache_local_iterator_${acces_req}.c)
+  set(target "microbe_cache_local_iterator_${acces_req}")
   add_executable(${target} ${sources})
   if(ipo_supported)
     set_property(
@@ -60,15 +61,15 @@ foreach(x RANGE 1 ${nr_access_req})
     RUNTIME DESTINATION bin)
 endforeach()
 
-foreach(x RANGE 1 ${nr_access_req})
+foreach(acces_req RANGE 1 ${nr_access_req})
   add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_global_iterator.${x}.c
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_global_iterator_${acces_req}.c
     COMMAND m4
-    ARGS -I/usr/share/doc/m4/examples/ -D ACCESS_REQ=${x} ${CMAKE_CURRENT_SOURCE_DIR}/microbe_cache.c.m4 > ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_global_iterator.${x}.c
+    ARGS -I/usr/share/doc/m4/examples/ -DACCESS_REQ=${acces_req} ${CMAKE_CURRENT_SOURCE_DIR}/microbe_cache.c.m4 > ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_global_iterator_${acces_req}.c
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/microbe_cache.c.m4
     VERBATIM)
-  set(sources microbe_cache_global_iterator.${x}.c)
-  set(target "microbe_cache_global_iterator_${x}")
+  set(sources microbe_cache_global_iterator_${acces_req}.c)
+  set(target "microbe_cache_global_iterator_${acces_req}")
   add_executable(${target} ${sources})
   if(ipo_supported)
     set_property(
@@ -90,7 +91,7 @@ foreach(thread_count RANGE 1 ${nr_thread})
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_local_iterator_threaded_${thread_count}_${acces_req}.c
       COMMAND m4
-      ARGS -I/usr/share/doc/m4/examples/ -D THREAD_COUNT=${thread_count} -D ACCESS_REQ=${acces_req} ${CMAKE_CURRENT_SOURCE_DIR}/microbe_cache_threaded.c.m4 > ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_local_iterator_threaded_${thread_count}_${acces_req}.c
+      ARGS -I/usr/share/doc/m4/examples/ -DTHREAD_COUNT=${thread_count} -DACCESS_REQ=${acces_req} ${CMAKE_CURRENT_SOURCE_DIR}/microbe_cache_threaded.c.m4 > ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_local_iterator_threaded_${thread_count}_${acces_req}.c
       DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/microbe_cache_threaded.c.m4
       VERBATIM)
     set(sources microbe_cache_local_iterator_threaded_${thread_count}_${acces_req}.c)
@@ -117,7 +118,7 @@ foreach(thread_count RANGE 1 ${nr_thread})
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_global_iterator_threaded_${thread_count}_${acces_req}.c
       COMMAND m4
-      ARGS -I/usr/share/doc/m4/examples/ -D THREAD_COUNT=${thread_count} -D ACCESS_REQ=${acces_req} ${CMAKE_CURRENT_SOURCE_DIR}/microbe_cache_threaded.c.m4 > ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_global_iterator_threaded_${thread_count}_${acces_req}.c
+      ARGS -I/usr/share/doc/m4/examples/ -DTHREAD_COUNT=${thread_count} -DACCESS_REQ=${acces_req} ${CMAKE_CURRENT_SOURCE_DIR}/microbe_cache_threaded.c.m4 > ${CMAKE_CURRENT_BINARY_DIR}/microbe_cache_global_iterator_threaded_${thread_count}_${acces_req}.c
       DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/microbe_cache_threaded.c.m4
       VERBATIM)
     set(sources microbe_cache_global_iterator_threaded_${thread_count}_${acces_req}.c)
