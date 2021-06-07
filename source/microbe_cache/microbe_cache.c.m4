@@ -15,11 +15,13 @@
 
 #include "memory.h"
 
-include(`forloop.m4')
+define(mym4for,
+       `ifelse(eval(($4==0) || (($4>0) && ($2>$3)) || (($4<0) && ($2<$3))),1,,
+       `define(`$1',$2)$5`'mym4for(`$1',eval($2 + $4),$3,$4,`$5')')')
 
 #if defined(GLOBAL_ITERATOR)
 /* if the iterator is a global, you have a store */
-forloop(`i', `1', ACCESS_REQ, `format(`size_t idx_in_array_%d = 0;
+mym4for(`i', `1', ACCESS_REQ, +1, `format(`size_t idx_in_array_%d = 0;
 ', i)')
 #endif /* GLOBAL_ITERATOR */
 
@@ -164,7 +166,7 @@ int main(int argc, char *argv[]) {
 
 	int ret = 0;
 
-	forloop(`i', `1', ACCESS_REQ, `format(`size_t *arr_n_ptr_%d = NULL;
+	mym4for(`i', `1', ACCESS_REQ, +1, `format(`size_t *arr_n_ptr_%d = NULL;
 	/* arr_n_ptr_%d */
 
 #if defined(LOCAL_ITERATOR)
@@ -222,7 +224,7 @@ int const unroll_fact = UNROLL;
 #endif /* defined(__clang__) */
 #endif /* defined(__unroll_cl__) */
 		for (size_t iter = nr_iter; iter > 0; --iter) {
-			forloop(`i', `1', ACCESS_REQ, `format(`idx_in_array_%d = arr_n_ptr_%d[idx_in_array_%d];
+			mym4for(`i', `1', ACCESS_REQ, +1, `format(`idx_in_array_%d = arr_n_ptr_%d[idx_in_array_%d];
 			', i, i, i)')
 		}
 	}
@@ -242,7 +244,7 @@ int const unroll_fact = UNROLL;
 	fprintf(fd_timing, "%10lu%09lu,stop\n", export_time_stop.tv_sec, export_time_stop.tv_nsec);
 	fclose(fd_timing);
 
-	forloop(`i', `1', ACCESS_REQ, `format(`/* print the iterator to cut its optimisation */
+	mym4for(`i', `1', ACCESS_REQ, +1, `format(`/* print the iterator to cut its optimisation */
 	printf("print to cut optimisation %s\n", idx_in_array_%d);
 	free(arr_n_ptr_%d);
 	', %zu, i, i)')
