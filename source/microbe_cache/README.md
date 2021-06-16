@@ -3,7 +3,17 @@
 ## Introduction
 
 This microbenchmark is useful to discover cache hierarchy and its latency.
-The benchmark do a pointer chasing over an array. The array is initialised to perform a sequential access with a parametrised stride (stide >= 1), or a random pattern (stride = 0). The random pattern is generated using either Gray code or an LSFR pseudo random number generator defined at compile time. With a random pattern, the array is accessed such as each cache line is touched only once within a memory page, then pass to the next page and so on.
+The benchmark do a pointer chasing over an array, which is initialised with the file sequence provided.
+
+Sequences is generated with `create_sequence.c`.
+In the source code of the sequence generator, you can specify `CACHE_LINE_SIZE` and `PAGE_SIZE` which are dependent on the system (`getconf LEVEL1_DCACHE_LINESIZE` and `getconf PAGE_SIZE` to obtain them). Also, you can specify `PTRS_PER_{PGD,P4D,PUD,PMD,PTE}` to setup the size of the array you would like to play with. These refers to the numbers of entry per intermediate table to translate memory addresses from virtual to physical.
+(for arm 32bit without LPAE, refer to`https://elixir.bootlin.com/linux/latest/source/arch/arm/include/asm/pgtable-2level.h`)
+
+Multiple files are generated:
+* `sequence_<array size>_1_inpage.txt` is a sequence that access the direct next index in the array.
+* `sequence_<array size>_<CACHE_LINE_SIZE / sizeof(size_t)>_inpage.txt` is a sequence that access the access jumping on the next cache line.
+* `sequence_<array size>_0_inpage.txt` is a sequence that jumps randomly within a memory page. When all cache lines are accessed once, it passes to the next page. This sequence is usefull to force regular cache misses, and beating the memory prefetcher.
+* `sequence_<array size>_0_outpage.txt` is a sequence that jumps randomly in the array. Each access try to touch a different set of {PGD,P4D,PUD,PMD,PTE,CL}, and to avoid the last `NR_LAST_PAGE_ENTRY_TO_AVOID` translation. This sequence tries to stress the TLB.
 
 There are multiple version of the benchmark:
 
@@ -17,7 +27,7 @@ There are multiple version of the benchmark:
 
 The input of the benchmark is:
 ```
-./microbe_cache_local_iterator_1 <array_size> <stride> <nr_iter_1> <nr_iter_2> <cpu_freq:KHz> <directory_to_put_results> <id_run>"
+./microbe_cache_local_iterator_1 <sequence> <nr_iter_1> <nr_iter_2> <cpu_freq:KHz> <directory_to_put_results> <id_run>"
 ```
 It's preferable to run this benchmark at a constant frequency for the CPU (fix `performance` governor for `cpufreq`).
 
@@ -30,20 +40,24 @@ It's nice to fix `nr_iter_1` to run the benchmark for 1s, and use `nr_iter_2` as
 
 The output shows different information:
 ```
-array_size rounded to fit a CACHE_LINE_SIZE from 33554432 to 33554448
+preparing arr_n_ptr_1 of size 33554432, stride 0, page_stride 1
+preparation done
 sizeof(size_t) = 4
-array_size = 33554448
-==> 134217792 b; 131072 Kb; 128 Mb
+array_size = 33554432
+==> 134217728 B; 131072.000000 KB; 128.000000 MB; 0.125000 GB
+==> 32768.000000 page of 4096
+cache_line_in_array 2097152
 stride = 0
+page_stride = 1
 nr_iter = 8161932
 nr_iter_2 = 10
 effective_nr_iter = 81619320
 cpu_freq = 1400000
 ==> 1.4 GHz; 1400 MHz; 1400000 KHz
-print to cut optimisation 30840448
-total time = 9779478210 ns; 9.77948 s
-time per iter 119.818 ns
-estimated cycles per iter 167.745 c
+print to cut optimisation 2714608
+total time = 9875589918 ns; 9.87559 s
+time per iter 120.996 ns
+estimated cycles per iter 169.394 c
 
 Timing depends on the memory allocator, CPUs and memory frequency, system busyness, number of iterations, etc...
 Set the number of iteration to run for at least a few seconds.

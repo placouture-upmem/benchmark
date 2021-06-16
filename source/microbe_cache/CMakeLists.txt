@@ -7,6 +7,24 @@ project("microbe_cache")
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
+set(sources create_sequence.c)
+set(target "create_sequence")
+add_executable(${target} ${sources})
+if(ipo_supported)
+  set_property(
+    TARGET ${target}
+    PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
+endif()
+target_include_directories(${target} PUBLIC .)
+target_compile_definitions(${target} PUBLIC ${compile_definitions})
+target_compile_options(${target} PUBLIC ${compile_options})
+target_link_libraries(${target} ${link_flags})
+
+install(
+  TARGETS ${target}
+  RUNTIME DESTINATION bin)
+
+
 set(nr_thread 4)
 set(nr_access_req 2)
 
@@ -29,12 +47,8 @@ set(compile_options
 set(compile_definitions
   _POSIX_C_SOURCE=200112L
 
-  PAGE_SIZE=4096 CACHE_LINE_SIZE=64
-
-  GRAY
-  # LFSR
-  # DEBUG
-  # DEBUG_RANDOM_BUCKET
+  PAGE_SIZE=4096
+  CACHE_LINE_SIZE=64
 
   )
 

@@ -19,8 +19,6 @@
 #include <time.h>
 #include <pthread.h>
 
-#include "memory.h"
-
 define(mym4for,
        `ifelse(eval(($4==0) || (($4>0) && ($2>$3)) || (($4<0) && ($2<$3))),1,,
        `define(`$1',$2)$5`'mym4for(`$1',eval($2 + $4),$3,$4,`$5')')')
@@ -79,10 +77,10 @@ void* thread_func(void* arg)
 	pthread_barrier_t *barrier = tinfo->barrier;
 	mym4for(`i', `1', ACCESS_REQ, +1, `format(`size_t *arr_n_ptr_%d = tinfo->arr_n_ptr_%d;
 	', i, i)')
-	#if defined(GLOBAL_ITERATOR)
+#if defined(GLOBAL_ITERATOR)
 	mym4for(`i', `1', ACCESS_REQ, +1, `format(`size_t *idx_in_array_%d = tinfo->idx_in_array_%d;
 	', i, i)')
-	#endif /* GLOBAL_ITERATOR */
+#endif /* GLOBAL_ITERATOR */
 
 	size_t thread_id = tinfo->thread_id;
 	size_t nr_iter_2 = tinfo->nr_iter_2;
@@ -173,26 +171,17 @@ void* thread_func(void* arg)
 	fprintf(fd_timing, "%10lu%09lu,stop\n", export_time_stop.tv_sec, export_time_stop.tv_nsec);
 	fclose(fd_timing);
 
-	#if defined(LOCAL_ITERATOR)
+#if defined(LOCAL_ITERATOR)
 	mym4for(`i', `1', ACCESS_REQ, +1, `format(`printf("print to cut optimisation %s\n", idx_in_array_%d);
 	', %zu, i)')
-	#endif /* LOCAL_ITERATOR */
+#endif /* LOCAL_ITERATOR */
 
 	return NULL;
 }
 
 int main(int argc, char *argv[]) {
-	(void) argc;
-	(void) argv;
-
-#ifdef DEBUG
-	printf("argc = %d\n", argc);
-	for (int idx = 0; idx < argc; ++idx) {
-		printf("argv[%zu] = %s\n", idx, argv[idx]);
-	}
-#endif /* DEBUG */
-	if (argc != 8) {
-		fprintf(stderr, "USAGE: %s <array_size> <stride> <nr_iter_1> <nr_iter_2> <cpu_freq:KHz> <directory_to_put_results> <id_run>\n",
+	if (argc != 7) {
+		fprintf(stderr, "USAGE: %s <sequence_file> <nr_iter_1> <nr_iter_2> <cpu_freq:KHz> <directory_to_put_results> <id_run>\n",
 			argv[0]);
 		exit(EXIT_FAILURE);
 	}
@@ -202,6 +191,7 @@ int main(int argc, char *argv[]) {
 
 	size_t array_size;
 	size_t stride;
+	size_t page_stride;
 	// Note: we keep nr_iter and nr_iter_2 as size_t
 	//       as too limit computation whether it is 32bit or 64bit
 	//       nr_iter_2: outer-loop, nr_iter: inner-loop
@@ -209,28 +199,6 @@ int main(int argc, char *argv[]) {
 	//       a nice idea is to set nr_iter to compute for 1s, and nr_iter_2 is a second multiplyer
 	size_t nr_iter;
 	size_t nr_iter_2;
-
-	errno = 0;
-	to_parse = argv[1];
-	parse_me = strtoull(to_parse, NULL, 10);
-	if ((parse_me == ULLONG_MAX && errno == ERANGE)
-	    || (parse_me > SIZE_MAX)) {
-		fprintf(stderr, "<array_size> overflow %s > (%llu | %zu)\n",
-			to_parse, ULLONG_MAX, SIZE_MAX);
-		exit(ERANGE);
-	}
-	array_size = (size_t) parse_me;
-
-	errno = 0;
-	to_parse = argv[2];
-	parse_me = strtoull(to_parse, NULL, 10);
-	if ((parse_me == ULLONG_MAX && errno == ERANGE)
-	    || (parse_me > SIZE_MAX)) {
-		fprintf(stderr, "<stride> overflow %s > (%llu | %zu)\n",
-			to_parse, ULLONG_MAX, SIZE_MAX);
-		exit(ERANGE);
-	}
-	stride = (size_t) parse_me;
 
 	errno = 0;
 	to_parse = argv[3];
@@ -262,55 +230,25 @@ int main(int argc, char *argv[]) {
 
 	unsigned int cpu_freq = atoi(argv[5]);
 
-	size_t allocation_size = array_size;
-	unsigned long long array_byte_size = 1ULL * array_size * sizeof(size_t);
-
-	if (stride == 0) {
-		if (array_size % (CACHE_LINE_SIZE / sizeof(size_t))) {
-			size_t array_size_ = (array_size + ((CACHE_LINE_SIZE / sizeof(size_t))
-							    - (array_size % (CACHE_LINE_SIZE / sizeof(size_t)))));
-			printf("array_size rounded to be a multiple of CACHE_LINE_SIZE from %zu to %zu\n",
-			       array_size, array_size_);
-			array_size = array_size_;
-		}
-
-		if (array_size % (PAGE_SIZE / sizeof(size_t))) {
-			allocation_size = (array_size + ((PAGE_SIZE / sizeof(size_t))
-							 - (array_size % (PAGE_SIZE / sizeof(size_t)))));
-		} else {
-			allocation_size = array_size;
-		}
-	}
-
-	printf("sizeof(size_t) = %zu\n", sizeof(size_t));
-	printf("accessing array_size = %zu\n", array_size);
-	printf("allocation_size is %zu\n", allocation_size);
-
-	printf("==> %llu b; %f Kb; %f Mb\n",
-	       array_byte_size, (double) array_byte_size / 1024.,
-	       (double) array_byte_size / 1024. / 1024.);
-	// grep MemTotal /proc/meminfo to check physical memory
-	printf("==> %f page of %d\n",
-	       (double) array_byte_size / PAGE_SIZE, PAGE_SIZE);
-
-	printf("stride = %zu\n", stride);
-	printf("nr_iter = %zu\n", nr_iter);
-	printf("nr_iter_2 = %zu\n", nr_iter_2);
-	printf("effective_nr_iter = %llu\n", effective_nr_iter);
-	printf("cpu_freq = %u\n", cpu_freq);
-	printf("==> %g GHz; %g MHz; %u KHz\n",
-	       cpu_freq * 1e-6, cpu_freq * 1e-3, cpu_freq);
-
 	int ret = 0;
 
 	mym4for(`th_idx', `1', THREAD_COUNT, +1, `mym4for(`i', `1', ACCESS_REQ, +1, `format(`
 	size_t *arr_n_ptr_%d_%d = NULL;
 
-	arr_n_ptr_%d_%d = (size_t *) malloc(allocation_size * sizeof(size_t));
-	/* arr_n_ptr_%d_%d = (size_t *) calloc(allocation_size, sizeof(size_t)); */
+	FILE *sequence_%d_%d = fopen(argv[1], "r");
+	if (!sequence_%d_%d) {
+		char error_msg[128];
+		snprintf(error_msg, sizeof error_msg, "%s", argv[1]);
+		handle_perror(error_msg);
+	}
+
+	fscanf(sequence_%d_%d, "%s %s %s", &array_size, &stride, &page_stride);
+	printf("preparing arr_n_ptr_%d_%d of size %s, stride %s, page_stride %s\n", array_size, stride, page_stride);
+
+	arr_n_ptr_%d_%d = (size_t *) malloc(array_size * sizeof(size_t));
 
 	/* ret = posix_memalign((void **)&arr_n_ptr_%d_%d, PAGE_SIZE, */
-	/* 		     allocation_size * sizeof(size_t)); */
+	/* 		     array_size * sizeof(size_t)); */
 
 	if ((ret != 0) | (arr_n_ptr_%d_%d == NULL)) {
 		char error_msg[128];
@@ -319,22 +257,53 @@ int main(int argc, char *argv[]) {
 		handle_error_en(ret, error_msg);
 	}
 
-	memset(arr_n_ptr_%d_%d, 0, sizeof(*arr_n_ptr_%d_%d));
-	init_array(arr_n_ptr_%d_%d, array_size, stride);
+	memset(arr_n_ptr_%d_%d, SIZE_MAX, array_size * sizeof(size_t));
 
-#ifdef DEBUG
-	printf("\n\n");
-
-	printf("If a page is not full, we do not check it properly! In this case, a manual check is required.\n");
-
-	if (verify_array(arr_n_ptr_%d_%d, allocation_size) < 0) {
-		if (stride == 0)
-			print_array(arr_n_ptr_%d_%d, allocation_size, nr_iter, nr_iter_2);
-		else
-			print_array(arr_n_ptr_%d_%d, array_size, nr_iter, nr_iter_2);
+	while (!feof(sequence_%d_%d)) {
+		size_t idx, num;
+		fscanf(sequence_%d_%d, "%s %s", &idx, &num);
+		arr_n_ptr_%d_%d[idx] = num;
 	}
-#endif /* DEBUG */
-	', th_idx, i, th_idx, i, th_idx, i, th_idx, i, th_idx, i, th_idx, i, th_idx, i, th_idx, i, th_idx, i, th_idx, i, th_idx, i, th_idx, i)')')
+
+	fclose(sequence_%d_%d);
+	printf("preparation done\n");
+
+	', th_idx, i,
+	   th_idx, i,
+	   th_idx, i,
+	   %s,
+	   th_idx, i, %zu, %zu, %zu,
+	   th_idx, i, %zu, %zu, %zu,
+	   th_idx, i,
+	   th_idx, i,
+	   th_idx, i,
+	   th_idx, i,
+	   th_idx, i,
+	   th_idx, i,
+	   th_idx, i, %zu, %zu,
+	   th_idx, i,
+	   th_idx, i)')')
+
+	printf("sizeof(size_t) = %zu\n", sizeof(size_t));
+	printf("array_size = %zu\n", array_size);
+	size_t array_byte_size = array_size * sizeof(size_t);
+
+	printf("==> %zu B; %f KB; %f MB; %f GB\n",
+	       array_byte_size, (double) array_byte_size / 1024.,
+	       (double) array_byte_size / 1024. / 1024.,
+	       (double) array_byte_size / 1024. / 1024. / 1024.);
+	// grep MemTotal /proc/meminfo to check physical memory
+	printf("==> %f page of %d\n",
+	       (double) array_byte_size / PAGE_SIZE, PAGE_SIZE);
+	printf("cache_line_in_array %zu\n", array_byte_size / CACHE_LINE_SIZE);
+	printf("stride = %zu\n", stride);
+	printf("page_stride = %zu\n", page_stride);
+	printf("nr_iter = %zu\n", nr_iter);
+	printf("nr_iter_2 = %zu\n", nr_iter_2);
+	printf("effective_nr_iter = %llu\n", effective_nr_iter);
+	printf("cpu_freq = %u\n", cpu_freq);
+	printf("==> %g GHz; %g MHz; %u KHz\n",
+	       cpu_freq * 1e-6, cpu_freq * 1e-3, cpu_freq);
 
 	pthread_barrier_t barrier;
 	pthread_barrier_init(&barrier, NULL, THREAD_COUNT + 1);
@@ -415,7 +384,7 @@ int main(int argc, char *argv[]) {
 	       "Run multiple times before making any conclusion.\n\n");
 
 	char general_path[4096] = {0};
-	strncpy(general_path, argv[6], sizeof general_path - 1);
+	strncpy(general_path, argv[5], sizeof general_path - 1);
 
 	char fd_summary_path[sizeof general_path + 13] = {0};
 	snprintf(fd_summary_path, sizeof fd_summary_path, "%s/summary.csv",
@@ -431,7 +400,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	fprintf(fd_summary, "%s,%s,%010zu,%zu,%llu,%u,%llu,%g,%g\n",
-		argv[7], argv[0], array_size, stride, effective_nr_iter, cpu_freq,
+		argv[6], argv[0], array_size, stride, effective_nr_iter, cpu_freq,
 		delta, time_per_iter, cycles_per_iter);
 	fclose(fd_summary);
 

@@ -127,7 +127,7 @@ if test -f "${LOGTRACE_DIR}/current_id"; then
     id_run=`cat ${LOGTRACE_DIR}/current_id`
     id_run=$((id_run+1))
 else
-    echo "id,bin,array_size,stride,nr_iter,cpu_freq,duration,time_per_iter,cycles_per_iter" > ${LOGTRACE_DIR}/summary.csv
+    echo "id,bin,array_size,stride,page_stride,nr_iter,cpu_freq,duration,time_per_iter,cycles_per_iter" > ${LOGTRACE_DIR}/summary.csv
     id_run=1
 fi
 
@@ -276,14 +276,8 @@ big_freq=(
 )
 
 configuration_little=(
-    "16777216 0 8161932 10"
-
-    # "33554432 0 8161932 10"
-    # "1048576 0 8161932 10"
-    # "160100 0 23402925 10"
-    # "131072 0 44793033 10"
-    # "65536 0 104767332 10"
-    # "4 0 463492975 10"
+    "${ROOT_DIR}/bench_install/data/sequence_00000000000033554432_0_inpage.txt 8161932 10"
+    "${ROOT_DIR}/bench_install/data/sequence_00000000000033554432_0_outpage.txt 8161932 10"
 )
 
 taskmap=0x0f
@@ -351,14 +345,8 @@ big_freq=(
 )
 
 configuration_big=(
-    "16777216 0 8161932 10"
-
-    # "33554432 0 8161932 10"
-    # "1048576 0 9555113 10"
-    # "160100 0 88541805 10"
-    # "131072 0 88541805 10"
-    # "65536 0 88541805 10"
-    # "4 0 496571176 10"
+    "${ROOT_DIR}/bench_install/data/sequence_00000000000033554432_0_inpage.txt 8161932 10"
+    "${ROOT_DIR}/bench_install/data/sequence_00000000000033554432_0_outpage.txt 8161932 10"
 )
 
 taskmap=0xf0
