@@ -48,7 +48,6 @@ set(compile_definitions
   _POSIX_C_SOURCE=200112L
 
   PAGE_SIZE=4096
-  CACHE_LINE_SIZE=64
 
   )
 

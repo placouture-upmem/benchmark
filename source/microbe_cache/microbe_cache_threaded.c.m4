@@ -235,20 +235,25 @@ int main(int argc, char *argv[]) {
 	mym4for(`th_idx', `1', THREAD_COUNT, +1, `mym4for(`i', `1', ACCESS_REQ, +1, `format(`
 	size_t *arr_n_ptr_%d_%d = NULL;
 
-	FILE *sequence_%d_%d = fopen(argv[1], "r");
+	FILE *sequence_%d_%d = fopen(argv[1], "rb");
 	if (!sequence_%d_%d) {
 		char error_msg[128];
 		snprintf(error_msg, sizeof error_msg, "%s", argv[1]);
 		handle_perror(error_msg);
 	}
 
-	fscanf(sequence_%d_%d, "%s %s %s", &array_size, &stride, &page_stride);
+	fread(&array_size, sizeof(size_t), 1, sequence_%d_%d);
+	fread(&stride, sizeof(size_t), 1, sequence_%d_%d);
+	fread(&page_stride, sizeof(size_t), 1, sequence_%d_%d);
+
 	printf("preparing arr_n_ptr_%d_%d of size %s, stride %s, page_stride %s\n", array_size, stride, page_stride);
 
-	arr_n_ptr_%d_%d = (size_t *) malloc(array_size * sizeof(size_t));
+	printf("allocation\n");
 
-	/* ret = posix_memalign((void **)&arr_n_ptr_%d_%d, PAGE_SIZE, */
-	/* 		     array_size * sizeof(size_t)); */
+	/* arr_n_ptr_%d_%d = (size_t *) malloc(array_size * sizeof(size_t)); */
+
+	ret = posix_memalign((void **)&arr_n_ptr_%d_%d, PAGE_SIZE,
+			     array_size * sizeof(size_t));
 
 	if ((ret != 0) | (arr_n_ptr_%d_%d == NULL)) {
 		char error_msg[128];
@@ -259,11 +264,17 @@ int main(int argc, char *argv[]) {
 
 	memset(arr_n_ptr_%d_%d, SIZE_MAX, array_size * sizeof(size_t));
 
-	while (!feof(sequence_%d_%d)) {
-		size_t idx, num;
-		fscanf(sequence_%d_%d, "%s %s", &idx, &num);
-		arr_n_ptr_%d_%d[idx] = num;
+	if (stride == 0) {
+		printf("reading\n");
+		fread(arr_n_ptr_%d_%d, sizeof(size_t), array_size, sequence_%d_%d);
+	} else {
+		printf("Init array\n");
+		for (size_t idx = 0; idx < array_size; idx++) {
+			arr_n_ptr_%d_%d[idx %s array_size] = (idx + stride) %s array_size;
+		}
 	}
+
+	printf("done\n");
 
 	fclose(sequence_%d_%d);
 	printf("preparation done\n");
@@ -272,16 +283,17 @@ int main(int argc, char *argv[]) {
 	   th_idx, i,
 	   th_idx, i,
 	   %s,
+	   th_idx, i,
+	   th_idx, i,
+	   th_idx, i,
 	   th_idx, i, %zu, %zu, %zu,
-	   th_idx, i, %zu, %zu, %zu,
 	   th_idx, i,
 	   th_idx, i,
 	   th_idx, i,
 	   th_idx, i,
 	   th_idx, i,
-	   th_idx, i,
-	   th_idx, i, %zu, %zu,
-	   th_idx, i,
+	   th_idx, i, th_idx, i,
+	   th_idx, i, %, %,
 	   th_idx, i)')')
 
 	printf("sizeof(size_t) = %zu\n", sizeof(size_t));
@@ -293,9 +305,6 @@ int main(int argc, char *argv[]) {
 	       (double) array_byte_size / 1024. / 1024.,
 	       (double) array_byte_size / 1024. / 1024. / 1024.);
 	// grep MemTotal /proc/meminfo to check physical memory
-	printf("==> %f page of %d\n",
-	       (double) array_byte_size / PAGE_SIZE, PAGE_SIZE);
-	printf("cache_line_in_array %zu\n", array_byte_size / CACHE_LINE_SIZE);
 	printf("stride = %zu\n", stride);
 	printf("page_stride = %zu\n", page_stride);
 	printf("nr_iter = %zu\n", nr_iter);
