@@ -231,9 +231,9 @@ int main(int argc, char *argv[])
 	size_t nr_pgd_entry = (array_size_byte / (PTRS_PER_P4D * PTRS_PER_PUD * PTRS_PER_PMD * PTRS_PER_PTE * PAGE_SIZE));
 
 	bool check_pte = nr_pte_entry > 1;
-	bool check_pmd = nr_pmd_entry % PTRS_PER_PMD;
-	bool check_pud = nr_pud_entry % PTRS_PER_PUD;
-	bool check_p4d = nr_p4d_entry % PTRS_PER_P4D;
+	bool check_pmd = (nr_pmd_entry % PTRS_PER_PMD) > 1;
+	bool check_pud = (nr_pud_entry % PTRS_PER_PUD) > 1;
+	bool check_p4d = (nr_p4d_entry % PTRS_PER_P4D) > 1;
 	bool check_pgd = nr_pgd_entry > 1;
 
 	/* printf("nr_pte_entry = %zu\n", nr_pte_entry); */
@@ -260,20 +260,27 @@ int main(int argc, char *argv[])
 #endif /* PRODUCE_HUMAN_READABLE_LOCATION_FILE */
 
 	size_t last_idx;
+
 	SIZE_T_BASE_TYPE *array;
+	SIZE_T_BASE_TYPE _array_size;
+	SIZE_T_BASE_TYPE _stride;
+	SIZE_T_BASE_TYPE _page_stride;
 
 	snprintf(filename, sizeof(filename), "sequence_%zu_%zu_%zu.bin", array_size, stride, page_stride);
 	fd_sequence = fopen(filename, "wb");
 	if (!fd_sequence)
 		handle_perror("fopen sequence");
 
-	if (fwrite(&array_size, sizeof(SIZE_T_BASE_TYPE), 1, fd_sequence) < 1)
+	_array_size = array_size;
+	if (fwrite(&_array_size, sizeof(SIZE_T_BASE_TYPE), 1, fd_sequence) < 1)
 		handle_perror("fwrite array_size");
 
-	if (fwrite(&stride, sizeof(SIZE_T_BASE_TYPE), 1, fd_sequence) < 1)
+	_stride = stride;
+	if (fwrite(&_stride, sizeof(SIZE_T_BASE_TYPE), 1, fd_sequence) < 1)
 		handle_perror("fwrite stride");
 
-	if (fwrite(&page_stride, sizeof(SIZE_T_BASE_TYPE), 1, fd_sequence) < 1)
+	_page_stride = page_stride;
+	if (fwrite(&_page_stride, sizeof(SIZE_T_BASE_TYPE), 1, fd_sequence) < 1)
 		handle_perror("fwrite page_stride");
 	fclose(fd_sequence);
 
@@ -286,13 +293,16 @@ int main(int argc, char *argv[])
 	if (!fd_sequence)
 		handle_perror("fopen sequence");
 
-	if (fwrite(&array_size, sizeof(SIZE_T_BASE_TYPE), 1, fd_sequence) < 1)
+	_array_size = array_size;
+	if (fwrite(&_array_size, sizeof(SIZE_T_BASE_TYPE), 1, fd_sequence) < 1)
 		handle_perror("fwrite array_size");
 
-	if (fwrite(&stride, sizeof(SIZE_T_BASE_TYPE), 1, fd_sequence) < 1)
+	_stride = stride;
+	if (fwrite(&_stride, sizeof(SIZE_T_BASE_TYPE), 1, fd_sequence) < 1)
 		handle_perror("fwrite stride");
 
-	if (fwrite(&page_stride, sizeof(SIZE_T_BASE_TYPE), 1, fd_sequence) < 1)
+	_page_stride = page_stride;
+	if (fwrite(&_page_stride, sizeof(SIZE_T_BASE_TYPE), 1, fd_sequence) < 1)
 		handle_perror("fwrite page_stride");
 	fclose(fd_sequence);
 
@@ -455,17 +465,20 @@ int main(int argc, char *argv[])
 #endif /* PRODUCE_HUMAN_READABLE_LOCATION_FILE */
 
 	snprintf(filename, sizeof(filename), "sequence_%zu_%zu_%zu.bin", array_size, stride, page_stride);
-	fd_sequence = fopen(filename, "w");
+	fd_sequence = fopen(filename, "wb");
 	if (!fd_sequence)
 		handle_perror("fopen sequence");
 
-	if (fwrite(&array_size, sizeof(SIZE_T_BASE_TYPE), 1, fd_sequence) < 1)
+	_array_size = array_size;
+	if (fwrite(&_array_size, sizeof(SIZE_T_BASE_TYPE), 1, fd_sequence) < 1)
 		handle_perror("fwrite array_size");
 
-	if (fwrite(&stride, sizeof(SIZE_T_BASE_TYPE), 1, fd_sequence) < 1)
+	_stride = stride;
+	if (fwrite(&_stride, sizeof(SIZE_T_BASE_TYPE), 1, fd_sequence) < 1)
 		handle_perror("fwrite stride");
 
-	if (fwrite(&page_stride, sizeof(SIZE_T_BASE_TYPE), 1, fd_sequence) < 1)
+	_page_stride = page_stride;
+	if (fwrite(&_page_stride, sizeof(SIZE_T_BASE_TYPE), 1, fd_sequence) < 1)
 		handle_perror("fwrite page_stride");
 
 	if (fwrite(array, sizeof(SIZE_T_BASE_TYPE), array_size, fd_sequence) < array_size)
@@ -636,17 +649,20 @@ int main(int argc, char *argv[])
 #endif /* PRODUCE_HUMAN_READABLE_LOCATION_FILE */
 
 	snprintf(filename, sizeof(filename), "sequence_%zu_%zu_%zu.bin", array_size, stride, page_stride);
-	fd_sequence = fopen(filename, "w");
+	fd_sequence = fopen(filename, "wb");
 	if (!fd_sequence)
 		handle_perror("fopen sequence");
 
-	if (fwrite(&array_size, sizeof(SIZE_T_BASE_TYPE), 1, fd_sequence) < 1)
+	_array_size = array_size;
+	if (fwrite(&_array_size, sizeof(SIZE_T_BASE_TYPE), 1, fd_sequence) < 1)
 		handle_perror("fwrite array_size");
 
-	if (fwrite(&stride, sizeof(SIZE_T_BASE_TYPE), 1, fd_sequence) < 1)
+	_stride = stride;
+	if (fwrite(&_stride, sizeof(SIZE_T_BASE_TYPE), 1, fd_sequence) < 1)
 		handle_perror("fwrite stride");
 
-	if (fwrite(&page_stride, sizeof(SIZE_T_BASE_TYPE), 1, fd_sequence) < 1)
+	_page_stride = page_stride;
+	if (fwrite(&_page_stride, sizeof(SIZE_T_BASE_TYPE), 1, fd_sequence) < 1)
 		handle_perror("fwrite page_stride");
 
 	if (fwrite(array, sizeof(SIZE_T_BASE_TYPE), array_size, fd_sequence) < array_size)
