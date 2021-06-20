@@ -114,9 +114,12 @@ int main(int argc, char *argv[]) {
 
 	printf("preparing fread\n");
 
-	fread(&array_size, sizeof(size_t), 1, sequence_%d);
-	fread(&stride, sizeof(size_t), 1, sequence_%d);
-	fread(&page_stride, sizeof(size_t), 1, sequence_%d);
+	if (fread(&array_size, sizeof(size_t), 1, sequence_%d) < 1)
+		handle_perror("fread array_size");
+	if (fread(&stride, sizeof(size_t), 1, sequence_%d) < 1)
+		handle_perror("fread stride");
+	if (fread(&page_stride, sizeof(size_t), 1, sequence_%d) < 1)
+		handle_perror("fread page_stride");
 
 	printf("preparing arr_n_ptr_%d of size %s, stride %s, page_stride %s\n", array_size, stride, page_stride);
 
@@ -138,7 +141,8 @@ int main(int argc, char *argv[]) {
 
 	if (stride == 0) {
 		printf("reading\n");
-		fread(arr_n_ptr_%d, sizeof(size_t), array_size, sequence_%d);
+		if (fread(arr_n_ptr_%d, sizeof(size_t), array_size, sequence_%d) < array_size)
+			handle_perror("fread array");
 	} else {
 		printf("Init array\n");
 		for (size_t idx = 0; idx < array_size; idx++) {
