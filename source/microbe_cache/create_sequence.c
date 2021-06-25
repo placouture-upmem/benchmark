@@ -209,10 +209,11 @@ int main(int argc, char *argv[])
 	printf("sizeof(SIZE_T_BASE_TYPE) = %zu\n", sizeof(SIZE_T_BASE_TYPE));
 	printf("array_size = %zu\n", array_size);
 	printf("array_size_byte %zu\n", array_size_byte);
-	printf("==> %zu B; %f KB; %f MB; %f GB\n",
+	printf("==> %zu B; %f KB; %f MB; %f GB; %f TB\n",
 	       array_size_byte, (double) array_size_byte / 1024.,
 	       (double) array_size_byte / 1024. / 1024.,
-	       (double) array_size_byte / 1024. / 1024. / 1024.);
+	       (double) array_size_byte / 1024. / 1024. / 1024.,
+	       (double) array_size_byte / 1024. / 1024. / 1024. / 1024);
 
 	printf("total full cache line %zu\n", nr_cache_line);
 	printf("total full page %zu\n", nr_page);
@@ -224,17 +225,17 @@ int main(int argc, char *argv[])
 		printf("cache line in last page %zu\n", last_page_elements);
 	}
 
-	size_t nr_pte_entry = (array_size_byte / (PAGE_SIZE));
-	size_t nr_pmd_entry = (array_size_byte / (PTRS_PER_PTE * PAGE_SIZE));
-	size_t nr_pud_entry = (array_size_byte / (PTRS_PER_PMD * PTRS_PER_PTE * PAGE_SIZE));
-	size_t nr_p4d_entry = (array_size_byte / (PTRS_PER_PUD * PTRS_PER_PMD * PTRS_PER_PTE * PAGE_SIZE));
-	size_t nr_pgd_entry = (array_size_byte / (PTRS_PER_P4D * PTRS_PER_PUD * PTRS_PER_PMD * PTRS_PER_PTE * PAGE_SIZE));
+	size_t nr_pte_entry = array_size_byte / PAGE_SIZE;
+	size_t nr_pmd_entry = nr_pte_entry / PTRS_PER_PTE;
+	size_t nr_pud_entry = nr_pmd_entry / PTRS_PER_PMD;
+	size_t nr_p4d_entry = nr_pud_entry / PTRS_PER_PUD;
+	size_t nr_pgd_entry = nr_p4d_entry / PTRS_PER_P4D;
 
-	bool check_pte = nr_pte_entry > 1;
-	bool check_pmd = (nr_pmd_entry % PTRS_PER_PMD) > 1;
-	bool check_pud = (nr_pud_entry % PTRS_PER_PUD) > 1;
-	bool check_p4d = (nr_p4d_entry % PTRS_PER_P4D) > 1;
-	bool check_pgd = nr_pgd_entry > 1;
+	bool check_pte = PTRS_PER_PTE > 1 && nr_pte_entry > 1;
+	bool check_pmd = PTRS_PER_PMD > 1 && nr_pmd_entry > 1;
+	bool check_pud = PTRS_PER_PUD > 1 && nr_pud_entry > 1;
+	bool check_p4d = PTRS_PER_P4D > 1 && nr_p4d_entry > 1;
+	bool check_pgd = PTRS_PER_PGD > 1 && nr_pgd_entry > 1;
 
 	/* printf("nr_pte_entry = %zu\n", nr_pte_entry); */
 	/* printf("nr_pmd_entry = %zu\n", nr_pmd_entry); */
@@ -353,9 +354,9 @@ int main(int argc, char *argv[])
 	}
 
 	/* for (size_t idx = 0; idx < nr_cache_line; idx++) { */
-	/* 	printf("%zu ", idx); */
-	/* 	location_print(&mem[idx]); */
-	/* 	printf("\n"); */
+	/*	printf("%zu ", idx); */
+	/*	location_print(&mem[idx]); */
+	/*	printf("\n"); */
 	/* } */
 
 	/* working inpage */
@@ -516,76 +517,129 @@ int main(int argc, char *argv[])
 	}
 
 	printf("organise shuffled array per constraints\n");
-	size_t fail_to_swap = 0;
+	size_t cnt_fail_to_swap = 0;
+	size_t cnt_fail_to_swap_relaxed = 0;
+	bool first_fail_to_swap_has = false;
+	size_t first_fail_to_swap_idx = SIZE_MAX;
 
 	for (size_t idx = 0; idx < nr_cache_line - 1; idx++) {
-		/* printf("\nat %zu ", idx); */
-		/* location_print(&mem[idx]); */
-		/* printf("\n"); */
+#ifdef DEBUG
+		printf("\nat %zu ", idx);
+		location_print(&mem[idx]);
+		printf("\n");
 		/* getchar(); */
+#endif /* DEBUG */
 
 		size_t low_idx;
-		if (__builtin_sub_overflow(idx, NR_LAST_PAGE_ENTRY_TO_AVOID, &low_idx)) {
-			/* printf("overflow\n"); */
-			/* getchar(); */
+		if (__builtin_sub_overflow(idx, NR_LAST_PAGE_ENTRY_TO_AVOID, &low_idx))
 			low_idx = 0;
-		}
 
-		/* printf("\nchecking %zu ", idx + 1); */
-		/* location_print(&mem[idx + 1]); */
-		/* printf("\n"); */
-		if (location_has_subset(&mem[idx], &mem[idx + 1],
-					check_pgd,
-					check_p4d,
-					check_pud,
-					check_pmd,
-					check_pte)
-		    || location_is_in_last_entry_set(&mem[idx + 1], mem, low_idx, idx,
-						     check_pgd,
-						     check_p4d,
-						     check_pud,
-						     check_pmd,
-						     check_pte)
-			) {
-			/* printf("should swap the next access at %zu\n", idx + 1); */
-			/* printf(" == %zu ", idx + 1); */
-			/* location_print(&mem[idx + 1]); */
-			/* printf("\n"); */
+#ifdef DEBUG
+		printf("\nchecking %zu ", idx + 1);
+		location_print(&mem[idx + 1]);
+		printf("\n");
+#endif /* DEBUG */
+		bool is_next_location_has_subset = location_has_subset(&mem[idx], &mem[idx + 1],
+								       check_pgd,
+								       check_p4d,
+								       check_pud,
+								       check_pmd,
+								       check_pte);
+		bool is_next_location_in_last_entry_set = location_is_in_last_entry_set(&mem[idx + 1], mem, low_idx, idx,
+											check_pgd,
+											check_p4d,
+											check_pud,
+											check_pmd,
+											check_pte);
+#ifdef DEBUG
+		printf("is_next_location_has_subset = %d\n", is_next_location_has_subset);
+		printf("is_next_location_in_last_entry_set = %d\n", is_next_location_in_last_entry_set);
+#endif /* DEBUG */
+
+		if (is_next_location_has_subset || is_next_location_in_last_entry_set) {
+#ifdef DEBUG
+			printf("should swap the next access at %zu\n", idx + 1);
+			printf(" == %zu ", idx + 1);
+			location_print(&mem[idx + 1]);
+			printf("\n");
 			/* getchar(); */
-
+#endif /* DEBUG */
 			bool swaped = false;
+			size_t an_idx_no_subset = SIZE_MAX;
 
 			for (size_t idx_swap = idx + 2; idx_swap < nr_cache_line; idx_swap++) {
-				/* printf(" candidate %zu ", idx_swap); */
-				/* location_print(&mem[idx_swap]); */
-				/* printf("\n"); */
-				if (!location_has_subset(&mem[idx + 1], &mem[idx_swap],
-							 check_pgd,
-							 check_p4d,
-							 check_pud,
-							 check_pmd,
-							 check_pte)
-				    && !location_is_in_last_entry_set(&mem[idx_swap], mem, low_idx, idx + 1,
-								      check_pgd,
-								      check_p4d,
-								      check_pud,
-								      check_pmd,
-								      check_pte)
-					) {
+#ifdef DEBUG
+				printf(" candidate %zu ", idx_swap);
+				location_print(&mem[idx_swap]);
+				printf("\n");
+#endif /* DEBUG */
+				bool _location_has_subset = location_has_subset(&mem[idx_swap], &mem[idx],
+										check_pgd,
+										check_p4d,
+										check_pud,
+										check_pmd,
+										check_pte);
+				if (!_location_has_subset)
+					an_idx_no_subset = idx_swap;
+
+				bool _location_is_in_last_entry_set = location_is_in_last_entry_set(&mem[idx_swap], mem, low_idx, idx,
+												    check_pgd,
+												    check_p4d,
+												    check_pud,
+												    check_pmd,
+												    check_pte);
+#ifdef DEBUG
+				printf("_location_has_subset = %d\n", _location_has_subset);
+				printf("_location_is_in_last_entry_set = %d\n", _location_is_in_last_entry_set);
+#endif /* DEBUG */
+
+				if (!_location_has_subset && !_location_is_in_last_entry_set) {
 					location_swap(&mem[idx + 1], &mem[idx_swap]);
 					swaped = true;
-					/* printf("found\n"); */
+#ifdef DEBUG
+					printf("found\n");
+#endif /* DEBUG */
 					break;
 				}
 				/* getchar(); */
 			}
 
+			if (!swaped && !is_next_location_has_subset) {
+				printf("swapped by relaxed constraint (kept)\n");
+				swaped = true;
+				cnt_fail_to_swap_relaxed++;
+				if (!first_fail_to_swap_has) {
+					first_fail_to_swap_has = true;
+					first_fail_to_swap_idx = nr_cache_line - 1 - idx;
+				}
+			}
+
+			if (!swaped && is_next_location_has_subset && an_idx_no_subset != SIZE_MAX) {
+				location_swap(&mem[idx + 1], &mem[an_idx_no_subset]);
+				printf("swapped by relaxed constraint %zu (%zu) %zu\n", idx, nr_cache_line - 1 - idx, an_idx_no_subset);
+				swaped = true;
+				cnt_fail_to_swap_relaxed++;
+				if (!first_fail_to_swap_has) {
+					first_fail_to_swap_has = true;
+					first_fail_to_swap_idx = nr_cache_line - 1 - idx;
+				}
+			}
+
 			if (!swaped) {
-				/* printf("no candidate for cache line %zu (%zu)\n", idx, nr_cache_line - 1 - idx); */
+				printf("no candidate for cache line %zu (%zu) %zu\n", idx, nr_cache_line - 1 - idx, an_idx_no_subset);
+				location_print(&mem[idx]);
+				printf("\n");
 				/* getchar(); */
-				fail_to_swap++;
+				cnt_fail_to_swap++;
+
+				if (!first_fail_to_swap_has) {
+					first_fail_to_swap_has = true;
+					first_fail_to_swap_idx = nr_cache_line - 1 - idx;
+				}
 			}
 			/* getchar(); */
+			/* if (idx == 98160) */
+			/*	getchar(); */
 		}
 	}
 
@@ -595,10 +649,16 @@ int main(int argc, char *argv[])
 		location_swap(&mem[idx_low], &mem[idx_high]);
 	}
 
-	if (fail_to_swap > 0) {
+	if (cnt_fail_to_swap > 0 || cnt_fail_to_swap_relaxed > 0) {
 		printf("\n\n====\n");
-		printf("nr cache lines that fail on the constraint %zu\n", fail_to_swap);
-		printf("which is %f%% of the total cache line\n", (double)fail_to_swap * 100. / nr_cache_line);
+		printf("first_fail_to_swap_idx = %zu\n", first_fail_to_swap_idx);
+
+		printf("nr cache lines that trully fail on the constraint %zu\n", cnt_fail_to_swap);
+		printf("which is %f%% of the total cache line\n", (double)cnt_fail_to_swap * 100. / nr_cache_line);
+
+		printf("nr cache lines that fail on the relaxed constraint %zu\n", cnt_fail_to_swap_relaxed);
+		printf("which is %f%% of the total cache line\n", (double)cnt_fail_to_swap_relaxed * 100. / nr_cache_line);
+
 		printf("if it is a problem, increase the size of the array, or reduce NR_LAST_PAGE_ENTRY_TO_AVOID\n");
 		printf("it also depends on the seed for srand()\n");
 		printf("current seed %u\n", seed);
