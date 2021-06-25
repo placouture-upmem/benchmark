@@ -6,7 +6,7 @@
 (
     mkdir -p bench_build
     cd bench_build
-    cmake -DCMAKE_INSTALL_PREFIX=`pwd`/../bench_install ../source/microbe_cache
+    cmake -DCMAKE_INSTALL_PREFIX=`pwd`/../benchmark_install ../source/microbe_cache
     make VERBOSE=1
     make install
 )

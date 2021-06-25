@@ -43,13 +43,6 @@ set(compile_options
   -std=c99 -Wall -Wextra -Wshadow -pedantic -Wno-unused-parameter ${optim}
   )
 
-#=> use DEBUG and DEBUG_RANDOM_BUCKET to check how array indexation is made
-#=> use GRAY of LFSR for the generated pattern
-#=> GRAY is fine for a random bucket that has 2^x a size (e.g. 1<<x)
-#=> for a dense (PAGE_SIZE:4096, CACHE_LINE_SIZE:64) on a 32bit CPU:
-#   the LFSR polynomial is already fine
-#=> fine tune the polynomial for a different configuration
-
 set(compile_definitions
   _POSIX_C_SOURCE=200112L
 
@@ -162,6 +155,11 @@ foreach(thread_count RANGE 1 ${nr_thread})
 endforeach()
 
 install(
-  FILES script_odroid_xu3.sh
+  FILES script_create_configuration_odroidxu3.sh
+  PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+  DESTINATION bin)
+
+install(
+  FILES script_execute_odroidxu3.sh
   PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
   DESTINATION bin)

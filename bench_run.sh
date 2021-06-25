@@ -1,7 +1,10 @@
 #!/bin/bash
 
-mkdir ./bench_install/data/
-./bench_install/bin/create_sequence
-mv sequence_* ./bench_install/data/
+(
+    mkdir -p ./benchmark_install/input/sequence/sequence_33554432
+    cd ./benchmark_install/input/sequence/sequence_33554432
+    ../../../bin/create_sequence 33554432
+)
 
-./bench_install/bin/script_odroid_xu3.sh
+bash ./benchmark_install/bin/script_create_configuration_odroidxu3.sh
+bash ./benchmark_install/bin/script_execute_odroidxu3.sh
