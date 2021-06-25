@@ -412,7 +412,7 @@ int main(int argc, char *argv[]) {
 		handle_perror(error_msg);
 	}
 
-	fprintf(fd_summary, "%s,%s,%010zu,%zu,%llu,%u,%llu,%g,%g\n",
+	fprintf(fd_summary, "%s,%s,%zu,%zu,%llu,%u,%llu,%g,%g\n",
 		argv[6], argv[0], array_size, stride, effective_nr_iter, cpu_freq,
 		delta, time_per_iter, cycles_per_iter);
 	fclose(fd_summary);
