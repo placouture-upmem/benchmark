@@ -19,10 +19,6 @@ Simply clone, build and run:
     ./bench_run.sh
 ```
 
-Scripts used freely the `sudo` command to force CPU/GPU/other frequencies and DVFS governors. To automate everything smoothly, you could allow using sudo without password for the user.
-
-The current project version is appropriate to run on the HardKernel Odroid-XU{3,4} board running Debian 10 with a standard Linux kernel >= 5.11.y
-
 ## Prerequisites
 * bash
 * cmake 3.13+
