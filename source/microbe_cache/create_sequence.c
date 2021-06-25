@@ -30,17 +30,18 @@
 
 /* #define SIZE_T_BASE_TYPE size_t */
 /* #define SIZE_T_BASE_TYPE uint16_t */
-#define SIZE_T_BASE_TYPE uint32_t
+/* #define SIZE_T_BASE_TYPE uint32_t */
+/* #define SIZE_T_BASE_TYPE uint64_t */
 
 #define CACHE_LINE_SIZE 64
 #define PAGE_SIZE 4096
 
-/* arm 32bits without LPAE */
-#define PTRS_PER_PTE 512
-#define PTRS_PER_PMD 1
-#define PTRS_PER_PUD 1
-#define PTRS_PER_P4D 1
-#define PTRS_PER_PGD 2048
+/* /\* arm 32bits without LPAE *\/ */
+/* #define PTRS_PER_PTE 512 */
+/* #define PTRS_PER_PMD 1 */
+/* #define PTRS_PER_PUD 1 */
+/* #define PTRS_PER_P4D 1 */
+/* #define PTRS_PER_PGD 2048 */
 
 /* /\* arm 32bits with LPAE *\/ */
 /* #define PTRS_PER_PTE 512 */
@@ -48,6 +49,20 @@
 /* #define PTRS_PER_PUD 1 */
 /* #define PTRS_PER_P4D 1 */
 /* #define PTRS_PER_PGD 4 */
+
+/* /\* arm 64bits *\/ */
+/* #define PAGE_SHIFT 12 */
+/* #define VA_BITS 48 */
+/* #define CONFIG_PGTABLE_LEVELS 4 */
+
+/* #define ARM64_HW_PGTABLE_LEVEL_SHIFT(n)	((PAGE_SHIFT - 3) * (4 - (n)) + 3) */
+/* #define PGDIR_SHIFT ARM64_HW_PGTABLE_LEVEL_SHIFT(4 - CONFIG_PGTABLE_LEVELS) */
+
+/* #define PTRS_PER_PTE		(1 << (PAGE_SHIFT - 3)) */
+/* #define PTRS_PER_PMD		PTRS_PER_PTE */
+/* #define PTRS_PER_PUD		PTRS_PER_PTE */
+/* #define PTRS_PER_P4D		1 */
+/* #define PTRS_PER_PGD		(1 << (VA_BITS - PGDIR_SHIFT)) */
 
 #define NR_LAST_PAGE_ENTRY_TO_AVOID 0
 
