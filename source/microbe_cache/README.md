@@ -34,7 +34,7 @@ It's preferable to run this benchmark at a constant frequency for the CPU (fix `
 It's nice to fix `nr_iter_1` to run the benchmark for 1s, and use `nr_iter_2` as a multiplier.
 `directory_to_put_results` must be present, and `id_run` is just to make life easier for the analyser.
 
-`script_odroid_xu3.sh` is tailored for the Hardkernel Odroid-XU{3,4} board and will run the benchmark for different "interesting" array size, and scanning different CPU/mem frequencies.
+`script_create_configuration_odroidxu3.sh` and `script_execute_odroidxu3.sh` is tailored for the Hardkernel Odroid-XU{3,4} board and will run the benchmark for different "interesting" array size, and scanning different CPU/mem frequencies.
 
 ## Results
 
@@ -65,7 +65,7 @@ Run multiple times before making any conclusion.
 
 A `summary.csv` file is created in `directory_to_put_results` which gather benchmark configuration and results of the execution.
 
-`script_odroid_xu3.sh` gather other useful information in `directory_to_put_results/id_run`
+`script_execute_odroidxu3.sh` gather other useful information in `directory_to_put_results/id_run`
 
 ## Building
 The file `microbe_cache.c.m4` is used to create multiple version of the benchmark.

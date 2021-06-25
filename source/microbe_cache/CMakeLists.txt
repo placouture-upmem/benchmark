@@ -31,8 +31,8 @@ install(
   RUNTIME DESTINATION bin)
 
 
-set(nr_thread 4)
-set(nr_access_req 2)
+set(nr_thread 1)
+set(nr_access_req 1)
 
 # minimal unroll_factor must be 1
 # maximal depends on L1i cache size
