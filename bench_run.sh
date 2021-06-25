@@ -6,6 +6,9 @@
     ../../../bin/create_sequence 33554432
 )
 
+bash ./benchmark_install/bin/script_create_configuration_generic.sh
+bash ./benchmark_install/bin/script_execute_generic.sh
+
 # bash ./benchmark_install/bin/script_create_configuration_odroidxu3.sh
 # bash ./benchmark_install/bin/script_execute_odroidxu3.sh
 
