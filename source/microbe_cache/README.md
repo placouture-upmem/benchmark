@@ -7,12 +7,6 @@ The benchmark do a pointer chasing over an array, which is initialised with the 
 
 Sequences is generated with `benchmark/source/create_sequence/create_sequence.c`.
 
-Multiple files of the form `sequence_<array size>_<cache line stride>_<page stride>.bin` are generated:
-*  where cache line stride = 1, page stride = 1: a sequence that access the direct next index in the array.
-* cache line stride = <CACHE_LINE_SIZE / sizeof(size_t)>, page stride = 1: a sequence that access the array by cache line linearly.
-* cache line stride = 0, page stride = 1: a sequence that jumps randomly within a memory page. When all cache lines are accessed once, it passes to the next page. This sequence is usefull to force regular cache misses. The sequence are likely to be not prefetchable.
-* cache line stride = 0, page stride = 0: is a sequence that jumps randomly in the array. Each access try to touch a different set of {PGD,P4D,PUD,PMD,PTE,CL}, and to avoid the last `NR_LAST_PAGE_ENTRY_TO_AVOID` translation. This sequence tries to stress the TLB.
-
 There are multiple version of the benchmark:
 
 ```microbe_cache_local_iterator_X``` : access ```X``` different arrays, each has its own allocator. Iterators are local to the function, hence uses the stack. You can set ```X``` to fit in registers. If there are not enough registers, there will be stores/loads on the stack to manage the iterator.
