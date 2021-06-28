@@ -20,12 +20,11 @@ sizes=(
     # 402653184
 )
 
-for size in ${sizes[@]}
-do
-    (
-	echo `pwd`
-	mkdir -p benchmark_install/input/sequence_${size}
-	cd benchmark_install/input/sequence_${size}
-	../../bin/create_sequence ${size}
-    )
-done
+function work() {
+    mkdir -p benchmark_install/input/sequence_${1}
+    cd benchmark_install/input/sequence_${1}
+    ../../bin/create_sequence ${1}
+}
+export -f work
+
+parallel work ::: ${sizes[@]}

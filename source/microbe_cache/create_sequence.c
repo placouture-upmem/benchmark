@@ -107,7 +107,7 @@ void location_print(struct location *l)
 	       l->pgd, l->p4d, l->pud, l->pmd, l->pte, l->cl);
 }
 
-void location_swap(struct location *left, struct location *right)
+void location_swap(struct location *restrict left, struct location *restrict right)
 {
 	struct location tmp;
 	memcpy(&tmp, right, sizeof(struct location));
@@ -115,62 +115,84 @@ void location_swap(struct location *left, struct location *right)
 	memcpy(left, &tmp, sizeof(struct location));
 }
 
-bool location_has_subset(struct location *entry, struct location *comp,
+bool location_has_subset(struct location *restrict entry, struct location *restrict comp,
 			 bool check_pgd, bool check_p4d, bool check_pud, bool check_pmd, bool check_pte)
 {
 	bool res = entry->cl == comp->cl;
 
-	if (check_pte)
-		res |= entry->pte == comp->pte;
-	if (check_pmd)
-		res |= entry->pmd == comp->pmd;
-	if (check_pud)
-		res |= entry->pud == comp->pud;
-	if (check_p4d)
-		res |= entry->p4d == comp->p4d;
 	if (check_pgd)
 		res |= entry->pgd == comp->pgd;
+	if (check_p4d)
+		res |= entry->p4d == comp->p4d;
+	if (check_pud)
+		res |= entry->pud == comp->pud;
+	if (check_pmd)
+		res |= entry->pmd == comp->pmd;
+	if (check_pte)
+		res |= entry->pte == comp->pte;
 
 	return res;
 }
 
-bool location_has_common_IPT(struct location *entry, struct location *comp,
+bool location_has_common_IPT(struct location *restrict entry, struct location *restrict comp,
 			     bool check_pgd, bool check_p4d, bool check_pud, bool check_pmd, bool check_pte)
 {
 	bool res = check_pte || check_pmd || check_pud || check_p4d || check_pgd;
 
-	if (check_pte)
-		res &= entry->pte == comp->pte;
-	if (check_pmd)
-		res &= entry->pmd == comp->pmd;
-	if (check_pud)
-		res &= entry->pud == comp->pud;
-	if (check_p4d)
-		res &= entry->p4d == comp->p4d;
 	if (check_pgd)
 		res &= entry->pgd == comp->pgd;
+	if (check_p4d)
+		res &= entry->p4d == comp->p4d;
+	if (check_pud)
+		res &= entry->pud == comp->pud;
+	if (check_pmd)
+		res &= entry->pmd == comp->pmd;
+	if (check_pte)
+		res &= entry->pte == comp->pte;
 
 	return res;
 }
 
-bool location_is_in_last_entry_set(struct location *entry, struct location *array, size_t from, size_t to,
+bool location_is_in_last_entry_set(struct location *restrict entry, struct location *restrict array, size_t from, size_t to,
 				   bool check_pgd, bool check_p4d, bool check_pud, bool check_pmd, bool check_pte)
 {
-	/* printf("looking backward %zu %zu\n", from, to); */
-	/* location_print(entry); */
-	/* printf("\n"); */
-	for (size_t idx = from; idx < to; idx++) {
-		/* printf(" mem[%zu] ", idx); */
-		/* location_print(&array[idx]); */
-		/* printf("\n"); */
+#ifdef DEBUG
+	printf("looking backward %zu %zu\n", from, to);
+	location_print(entry);
+	printf("\n");
+#endif /* DEBUG */
+	if (from == 0) {
+#ifdef DEBUG
+		printf("from == 0\n");
+#endif /* DEBUG */
+		if (location_has_common_IPT(entry, &array[0],
+					    check_pgd, check_p4d, check_pud, check_pmd, check_pte)) {
+#ifdef DEBUG
+			printf("ret true\n");
+#endif /* DEBUG */
+			return true;
+		}
 
+		from = 1;
+	}
+
+	for (size_t idx = to; idx >= from; --idx) {
+#ifdef DEBUG
+		printf(" mem[%zu] ", idx);
+		location_print(&array[idx]);
+		printf("\n");
+#endif /* DEBUG */
 		if (location_has_common_IPT(entry, &array[idx],
 					    check_pgd, check_p4d, check_pud, check_pmd, check_pte)) {
-			/* printf("ret true\n"); */
+#ifdef DEBUG
+			printf("ret true\n");
+#endif /* DEBUG */
 			return true;
 		}
 	}
-	/* printf("ret false\n"); */
+#ifdef DEBUG
+	printf("ret false\n");
+#endif /* DEBUG */
 	return false;
 }
 
@@ -190,8 +212,12 @@ void shuffle(struct location *array, size_t n)
 
 int main(int argc, char *argv[])
 {
+#ifdef DEBUG
+	unsigned int seed = 1;
+#else
 	unsigned int seed = time(NULL);
-	/* unsigned int seed = 1; */
+#endif /* DEBUG */
+
 	srand(seed);
 
 	if (argc != 2) {
@@ -537,6 +563,8 @@ int main(int argc, char *argv[])
 	bool first_fail_to_swap_has = false;
 	size_t first_fail_to_swap_idx = SIZE_MAX;
 
+	size_t starting_point = nr_cache_line - 1;
+
 	for (size_t idx = 0; idx < nr_cache_line - 1; idx++) {
 #ifdef DEBUG
 		printf("\nat %zu ", idx);
@@ -582,7 +610,14 @@ int main(int argc, char *argv[])
 			bool swaped = false;
 			size_t an_idx_no_subset = SIZE_MAX;
 
-			for (size_t idx_swap = idx + 2; idx_swap < nr_cache_line; idx_swap++) {
+
+			bool retried = false;
+
+
+			size_t idx_swap;
+		retry:
+			/* for (idx_swap = idx + 2; idx_swap < nr_cache_line; idx_swap++) { */
+			for (idx_swap = starting_point; idx_swap >= idx + 2; --idx_swap) {
 #ifdef DEBUG
 				printf(" candidate %zu ", idx_swap);
 				location_print(&mem[idx_swap]);
@@ -611,17 +646,28 @@ int main(int argc, char *argv[])
 				if (!_location_has_subset && !_location_is_in_last_entry_set) {
 					location_swap(&mem[idx + 1], &mem[idx_swap]);
 					swaped = true;
+
+					starting_point = idx_swap - 1;
+
 #ifdef DEBUG
 					printf("found\n");
 #endif /* DEBUG */
 					break;
 				}
-				/* getchar(); */
 			}
 
+			if (idx_swap == idx + 2) {
+				starting_point = nr_cache_line - 1;
+			}
+
+			/* TODO: if not swapped look after starting_point, and remove goto retry spaghetti */
+
 			if (!swaped && !is_next_location_has_subset) {
+#ifdef DEBUG
 				printf("swapped by relaxed constraint (kept)\n");
+#endif /* DEBUG */
 				swaped = true;
+
 				cnt_fail_to_swap_relaxed++;
 				if (!first_fail_to_swap_has) {
 					first_fail_to_swap_has = true;
@@ -630,9 +676,13 @@ int main(int argc, char *argv[])
 			}
 
 			if (!swaped && is_next_location_has_subset && an_idx_no_subset != SIZE_MAX) {
-				location_swap(&mem[idx + 1], &mem[an_idx_no_subset]);
+#ifdef DEBUG
 				printf("swapped by relaxed constraint %zu (%zu) %zu\n", idx, nr_cache_line - 1 - idx, an_idx_no_subset);
+#endif /* DEBUG */
+				location_swap(&mem[idx + 1], &mem[an_idx_no_subset]);
+
 				swaped = true;
+
 				cnt_fail_to_swap_relaxed++;
 				if (!first_fail_to_swap_has) {
 					first_fail_to_swap_has = true;
@@ -641,10 +691,19 @@ int main(int argc, char *argv[])
 			}
 
 			if (!swaped) {
+				if (!retried) {
+					starting_point = nr_cache_line - 1;
+					retried = true;
+					goto retry;
+				}
+
+#ifdef DEBUG
 				printf("no candidate for cache line %zu (%zu) %zu\n", idx, nr_cache_line - 1 - idx, an_idx_no_subset);
 				location_print(&mem[idx]);
 				printf("\n");
-				/* getchar(); */
+				getchar();
+#endif /* DEBUG */
+
 				cnt_fail_to_swap++;
 
 				if (!first_fail_to_swap_has) {
@@ -652,9 +711,9 @@ int main(int argc, char *argv[])
 					first_fail_to_swap_idx = nr_cache_line - 1 - idx;
 				}
 			}
-			/* getchar(); */
-			/* if (idx == 98160) */
-			/*	getchar(); */
+#ifdef DEBUG
+			getchar();
+#endif /* DEBUG */
 		}
 	}
 
@@ -671,7 +730,7 @@ int main(int argc, char *argv[])
 		printf("nr cache lines that trully fail on the constraint %zu\n", cnt_fail_to_swap);
 		printf("which is %f%% of the total cache line\n", (double)cnt_fail_to_swap * 100. / nr_cache_line);
 
-		printf("nr cache lines that fail on the relaxed constraint %zu\n", cnt_fail_to_swap_relaxed);
+		printf("nr cache lines that fail but pass on the relaxed constraint %zu\n", cnt_fail_to_swap_relaxed);
 		printf("which is %f%% of the total cache line\n", (double)cnt_fail_to_swap_relaxed * 100. / nr_cache_line);
 
 		printf("if it is a problem, increase the size of the array, or reduce NR_LAST_PAGE_ENTRY_TO_AVOID\n");
