@@ -1,6 +1,9 @@
 #!/bin/bash
 
 sizes=(
+    1048576
+    2097152
+
     # 4096
     # 8192
     # 16384
@@ -13,7 +16,7 @@ sizes=(
     # 2097152
     # 4194304
     # 16777216
-    33554432
+    # 33554432
     # 67108864
     # 134217728
     # 268435456
@@ -21,9 +24,10 @@ sizes=(
 )
 
 function work() {
-    mkdir -p benchmark_install/input/sequence_${1}
-    cd benchmark_install/input/sequence_${1}
-    ../../bin/create_sequence ${1}
+    mkdir -p benchmark_install/input/sequence/sequence_${1}
+    cd benchmark_install/input/sequence/sequence_${1}
+    echo `pwd`
+    ../../../../create_sequence_install/bin/create_sequence ${1}
 }
 export -f work
 

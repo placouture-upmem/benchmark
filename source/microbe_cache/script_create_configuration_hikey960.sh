@@ -16,7 +16,7 @@ else
     id_run=1
 fi
 
-nr_run=1
+nr_run=3
 
 # no class/devfreq for memory
 # cat /sys/kernel/debug/clk/\"clk-ddrc\"/clk_rate
@@ -52,10 +52,10 @@ taskmap=0x08
 benchs=()
 
 bench_args=(
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_33554432/sequence_33554432_1_1.bin 166666666 1"
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_33554432/sequence_33554432_8_1.bin 166666666 1"
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_33554432/sequence_33554432_0_1.bin 166666666 1"
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_33554432/sequence_33554432_0_0.bin 166666666 1"
+    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_1048576/sequence_1048576_1_1.bin 166666666 1"
+    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_1048576/sequence_1048576_8_1.bin 166666666 1"
+    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_1048576/sequence_1048576_0_1.bin 166666666 1"
+    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_1048576/sequence_1048576_0_0.bin 166666666 1"
 )
 
 for nr_access in {1..1}
@@ -111,10 +111,10 @@ taskmap=0x80
 benchs=()
 
 bench_args=(
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_33554432/sequence_33554432_1_1.bin 625000000 1"
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_33554432/sequence_33554432_8_1.bin 625000000 1"
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_33554432/sequence_33554432_0_1.bin 625000000 1"
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_33554432/sequence_33554432_0_0.bin 625000000 1"
+    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_1048576/sequence_1048576_1_1.bin 625000000 1"
+    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_1048576/sequence_1048576_8_1.bin 625000000 1"
+    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_1048576/sequence_1048576_0_1.bin 625000000 1"
+    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_1048576/sequence_1048576_0_0.bin 625000000 1"
 )
 
 for nr_access in {1..1}

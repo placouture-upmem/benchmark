@@ -4,7 +4,7 @@ set -x
 
 ROOT_DIR=`pwd`
 
-LOGTRACE_NAME=stress_TLB
+LOGTRACE_NAME=stress
 LOGTRACE_DIR=${ROOT_DIR}/logtrace/${LOGTRACE_NAME}
 
 mkdir -p ${LOGTRACE_DIR}

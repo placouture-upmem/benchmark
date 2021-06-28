@@ -2,7 +2,7 @@
 
 ROOT_DIR=`pwd`
 
-LOGTRACE_NAME=stress_TLB
+LOGTRACE_NAME=stress
 LOGTRACE_DIR=${ROOT_DIR}/logtrace/${LOGTRACE_NAME}
 
 mkdir -p ${LOGTRACE_DIR}
@@ -16,7 +16,7 @@ else
     id_run=1
 fi
 
-nr_run=1
+nr_run=3
 
 mem_freq=(
     1866000000
@@ -44,7 +44,7 @@ big_freq=(
     # 1364000
     # 1210000
     # 1018000
-    # 682000
+    682000
 )
 
 taskmap=0x08
@@ -52,10 +52,10 @@ taskmap=0x08
 benchs=()
 
 bench_args=(
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_33554432/sequence_33554432_1_1.bin 125000000 1"
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_33554432/sequence_33554432_8_1.bin 125000000 1"
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_33554432/sequence_33554432_0_1.bin 125000000 1"
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_33554432/sequence_33554432_0_0.bin 125000000 1"
+    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_1048576/sequence_1048576_1_1.bin 125000000 1"
+    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_1048576/sequence_1048576_8_1.bin 125000000 1"
+    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_1048576/sequence_1048576_0_1.bin 125000000 1"
+    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_1048576/sequence_1048576_0_0.bin 125000000 1"
 )
 
 for nr_access in {1..1}
@@ -97,7 +97,7 @@ little_freq=(
     # 1402000
     # 1210000
     # 1018000
-    # 509000
+    509000
 )
 
 big_freq=(
@@ -118,10 +118,10 @@ taskmap=0x80
 benchs=()
 
 bench_args=(
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_33554432/sequence_33554432_1_1.bin 500000000 1"
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_33554432/sequence_33554432_8_1.bin 500000000 1"
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_33554432/sequence_33554432_0_1.bin 500000000 1"
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_33554432/sequence_33554432_0_0.bin 500000000 1"
+    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_1048576/sequence_1048576_1_1.bin 500000000 1"
+    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_1048576/sequence_1048576_8_1.bin 500000000 1"
+    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_1048576/sequence_1048576_0_1.bin 500000000 1"
+    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_1048576/sequence_1048576_0_0.bin 500000000 1"
 )
 
 for nr_access in {1..1}

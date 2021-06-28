@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.7.2)
 project("microbe_cache")
 
 # include(CheckIPOSupported)
@@ -12,24 +12,6 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
 set(INTERMEDIATE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/intermediate)
 file(MAKE_DIRECTORY ${INTERMEDIATE_OUTPUT_DIRECTORY})
-
-set(sources create_sequence.c)
-set(target "create_sequence")
-add_executable(${target} ${sources})
-if(ipo_supported)
-  set_property(
-    TARGET ${target}
-    PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
-endif()
-# target_compile_definitions(${target} PUBLIC DEBUG)
-target_compile_options(${target} PUBLIC
-  -std=c99 -Wall -Wextra -Wshadow -pedantic
-  -Ofast -march=native)
-
-install(
-  TARGETS ${target}
-  RUNTIME DESTINATION bin)
-
 
 set(nr_thread 1)
 set(nr_access_req 1)
@@ -155,11 +137,6 @@ foreach(thread_count RANGE 1 ${nr_thread})
 endforeach()
 
 install(
-  FILES script_create_sequence.sh
-  PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-  DESTINATION bin)
-
-install(
   FILES script_create_configuration_generic.sh
   PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
   DESTINATION bin)
@@ -178,6 +155,16 @@ install(
 
 # install(
 #   FILES script_execute_odroidxu3.sh
+#   PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+#   DESTINATION bin)
+
+# install(
+#   FILES script_create_configuration_hikey960.sh
+#   PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+#   DESTINATION bin)
+
+# install(
+#   FILES script_execute_hikey960.sh
 #   PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 #   DESTINATION bin)
 

@@ -2,7 +2,7 @@
 
 ROOT_DIR=`pwd`
 
-LOGTRACE_NAME=stress_TLB
+LOGTRACE_NAME=stress
 LOGTRACE_DIR=${ROOT_DIR}/logtrace/${LOGTRACE_NAME}
 
 mkdir -p ${LOGTRACE_DIR}
@@ -72,10 +72,10 @@ taskmap=0x08
 benchs=()
 
 bench_args=(
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_33554432/sequence_33554432_1_1.bin 8161932 1"
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_33554432/sequence_33554432_16_1.bin 8161932 1"
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_33554432/sequence_33554432_0_1.bin 8161932 1"
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_33554432/sequence_33554432_0_0.bin 8161932 1"
+    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_2097152/sequence_2097152_1_1.bin 8161932 1"
+    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_2097152/sequence_2097152_16_1.bin 8161932 1"
+    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_2097152/sequence_2097152_0_1.bin 8161932 1"
+    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_2097152/sequence_2097152_0_0.bin 8161932 1"
 )
 
 for nr_access in {1..1}
