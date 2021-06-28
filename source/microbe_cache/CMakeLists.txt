@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.10)
 project("microbe_cache")
 
 # include(CheckIPOSupported)
@@ -21,10 +21,9 @@ if(ipo_supported)
     TARGET ${target}
     PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
 endif()
-target_include_directories(${target} PUBLIC .)
-target_compile_definitions(${target} PUBLIC ${compile_definitions})
-target_compile_options(${target} PUBLIC ${compile_options})
-target_link_libraries(${target} ${link_flags})
+target_compile_options(${target} PUBLIC
+  -std=c99 -Wall -Wextra -Wshadow -pedantic
+  -Ofast -march=native)
 
 install(
   TARGETS ${target}
@@ -153,6 +152,11 @@ foreach(thread_count RANGE 1 ${nr_thread})
       RUNTIME DESTINATION bin)
   endforeach()
 endforeach()
+
+install(
+  FILES script_create_sequence.sh
+  PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+  DESTINATION bin)
 
 install(
   FILES script_create_configuration_generic.sh
