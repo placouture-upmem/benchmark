@@ -5,9 +5,7 @@
 This microbenchmark is useful to discover cache hierarchy and its latency.
 The benchmark do a pointer chasing over an array, which is initialised with the file sequence provided.
 
-Sequences is generated with `create_sequence.c`.
-In the source code of the sequence generator, you can specify `CACHE_LINE_SIZE` and `PAGE_SIZE` which are dependent on the system (`getconf LEVEL1_DCACHE_LINESIZE` and `getconf PAGE_SIZE` to obtain them). `SIZE_T_BASE_TYPE` is the type behind `size_t` of the targeted machine. Also, you can specify `PTRS_PER_{PGD,P4D,PUD,PMD,PTE}` to setup the size of the array you would like to play with. These refers to the numbers of entry per intermediate table to translate memory addresses from virtual to physical.
-(for arm 32bit without LPAE, refer to`https://elixir.bootlin.com/linux/latest/source/arch/arm/include/asm/pgtable-2level.h`)
+Sequences is generated with `benchmark/source/create_sequence/create_sequence.c`.
 
 Multiple files of the form `sequence_<array size>_<cache line stride>_<page stride>.bin` are generated:
 *  where cache line stride = 1, page stride = 1: a sequence that access the direct next index in the array.

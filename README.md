@@ -14,6 +14,10 @@ Simply clone, build and run:
 
 ```
     git clone https://github.com/wwilly/benchmark.git
+
+    # edit `source/create_sequence/create_sequence.c`
+    # edit `bench_run.sh`
+
     cd benchmark
     ./bench_build.sh
     ./bench_run.sh
@@ -21,9 +25,10 @@ Simply clone, build and run:
 
 ## Prerequisites
 * bash
-* cmake 3.13+
+* cmake 3.7+
 * gcc/clang
 * m4
+* parallel
 * sudo
 * Python 3+
 * gnuplot
