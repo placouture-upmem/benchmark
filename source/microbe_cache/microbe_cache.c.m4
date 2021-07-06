@@ -43,8 +43,14 @@ mym4for(`i', `1', ACCESS_REQ, +1, `format(`size_t idx_in_array_%d = 0;
 	} while (0)
 
 int main(int argc, char *argv[]) {
-	if (argc != 7) {
-		fprintf(stderr, "USAGE: %s <sequence_file> <nr_iter_1> <nr_iter_2> <cpu_freq:KHz> <directory_to_put_results> <id_run>\n",
+    for (int idx_arg = 0; idx_arg < argc; idx_arg++) {
+    printf("argv[%d] = %s\n", idx_arg, argv[idx_arg]);
+    }
+	if (argc != 6 + ACCESS_REQ) {
+		fprintf(stderr, "USAGE: %s <cpu_freq:KHz> <directory_to_put_results> <id_run> <nr_iter_1> <nr_iter_2>"
+		mym4for(`i', `1', ACCESS_REQ, +1, `format(`" <sequence_file_access_req_%d>"
+', i)')
+		 "\n",
 			argv[0]);
 		exit(EXIT_FAILURE);
 	}
@@ -64,7 +70,7 @@ int main(int argc, char *argv[]) {
 	size_t nr_iter_2;
 
 	errno = 0;
-	to_parse = argv[2];
+	to_parse = argv[4];
 	parse_me = strtoull(to_parse, NULL, 10);
 	if ((parse_me == ULLONG_MAX && errno == ERANGE)
 	    || (parse_me > SIZE_MAX - 1)) {
@@ -75,7 +81,7 @@ int main(int argc, char *argv[]) {
 	nr_iter = (size_t) parse_me;
 
 	errno = 0;
-	to_parse = argv[3];
+	to_parse = argv[5];
 	parse_me = strtoull(to_parse, NULL, 10);
 	if ((parse_me == ULLONG_MAX && errno == ERANGE)
 	    || (parse_me > SIZE_MAX - 1)) {
@@ -91,7 +97,7 @@ int main(int argc, char *argv[]) {
 		exit(ERANGE);
 	}
 
-	unsigned int cpu_freq = atoi(argv[4]);
+	unsigned int cpu_freq = atoi(argv[1]);
 
 	int ret = 0;
 
@@ -105,10 +111,10 @@ int main(int argc, char *argv[]) {
 	size_t idx_in_array_%d = 0;
 #endif /* LOCAL_ITERATOR */
 
-	FILE *sequence_%d = fopen(argv[1], "rb");
+	FILE *sequence_%d = fopen(argv[5 + %d], "rb");
 	if (!sequence_%d) {
 		char error_msg[128];
-		snprintf(error_msg, sizeof error_msg, "%s", argv[1]);
+		snprintf(error_msg, sizeof error_msg, "%%s", argv[5 + %d]);
 		handle_perror(error_msg);
 	}
 
@@ -121,7 +127,7 @@ int main(int argc, char *argv[]) {
 	if (fread(&page_stride, sizeof(size_t), 1, sequence_%d) < 1)
 		handle_perror("fread page_stride");
 
-	printf("preparing arr_n_ptr_%d of size %s, stride %s, page_stride %s\n", array_size, stride, page_stride);
+	printf("preparing arr_n_ptr_%d of size %%zu, stride %%zu, page_stride %%zu\n", array_size, stride, page_stride);
 
 	printf("allocation\n");
 
@@ -146,7 +152,7 @@ int main(int argc, char *argv[]) {
 	} else {
 		printf("Init array\n");
 		for (size_t idx = 0; idx < array_size; idx++) {
-			arr_n_ptr_%d[idx %s array_size] = (idx + stride) %s array_size;
+			arr_n_ptr_%d[idx %% array_size] = (idx + stride) %% array_size;
 		}
 	}
 
@@ -155,7 +161,7 @@ int main(int argc, char *argv[]) {
 	fclose(sequence_%d);
 	printf("preparation done\n");
 
-	', i, i, i, i, %s, i, i, i, i, %zu, %zu, %zu, i, i, i, i, i, i, i, i, %, %, i)')
+	', i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i)')
 
 	printf("sizeof(size_t) = %zu\n", sizeof(size_t));
 	printf("array_size = %zu\n", array_size);
@@ -242,7 +248,7 @@ int main(int argc, char *argv[]) {
 	       "Run multiple times before making any conclusion.\n\n");
 
 	char general_path[4096] = {0};
-	strncpy(general_path, argv[5], sizeof general_path - 1);
+	strncpy(general_path, argv[2], sizeof general_path - 1);
 
 	char fd_summary_path[sizeof general_path + 13] = {0};
 	snprintf(fd_summary_path, sizeof fd_summary_path, "%s/summary.csv",
@@ -258,7 +264,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	fprintf(fd_summary, "%s,%s,%zu,%zu,%zu,%llu,%u,%llu,%g,%g\n",
-		argv[6], argv[0], array_size, stride, page_stride, effective_nr_iter, cpu_freq,
+		argv[3], argv[0], array_size, stride, page_stride, effective_nr_iter, cpu_freq,
 		delta, time_per_iter, cycles_per_iter);
 	fclose(fd_summary);
 

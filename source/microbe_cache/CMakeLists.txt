@@ -14,7 +14,7 @@ set(INTERMEDIATE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/intermediate)
 file(MAKE_DIRECTORY ${INTERMEDIATE_OUTPUT_DIRECTORY})
 
 set(nr_thread 1)
-set(nr_access_req 1)
+set(nr_access_req 2)
 
 # minimal unroll_factor must be 1
 # maximal depends on L1i cache size

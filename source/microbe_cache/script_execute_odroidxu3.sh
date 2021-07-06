@@ -125,7 +125,7 @@ function run_benchmark()
 
 	script=$(mktemp)
 	echo "#!/bin/bash" > ${script}
-	echo "${ROOT_DIR}/benchmark_install/bin/${bench} ${sequence} ${nr_iter_1} ${nr_iter_2} ${freq} ${LOGTRACE_DIR} ${id_run} &" >> ${script}
+	echo "${ROOT_DIR}/benchmark_install/bin/${bench} ${freq} ${LOGTRACE_DIR} ${id_run} ${nr_iter_1} ${nr_iter_2} ${sequence} &" >> ${script}
 	echo "echo \$! >> real_pid.txt" >> ${script}
 	echo "wait \$!" >> ${script}
 
@@ -185,13 +185,13 @@ do
     lf=${split_line[2]}
     bf=${split_line[3]}
     taskmap=${split_line[4]}
-    bench=${split_line[5]}
-    sequence=${split_line[6]}
+    freq=${split_line[5]}
+    bench=${split_line[6]}
     nr_iter_1=${split_line[7]}
     nr_iter_2=${split_line[8]}
-    freq=${split_line[9]}
+    sequence=${split_line[@]:9}
     
-    echo "${id_run} ${mf} ${lf} ${bf} ${taskmap} ${bench} ${sequence} ${nr_iter_1} ${nr_iter_2} ${freq}"
+    echo "${id_run} ${mf} ${lf} ${bf} ${taskmap} ${freq} ${bench} ${nr_iter_1} ${nr_iter_2} ${sequence}"
 
     # read -n 1 -p Continue?;
 

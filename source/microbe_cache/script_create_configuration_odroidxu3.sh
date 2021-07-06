@@ -16,7 +16,41 @@ else
     id_run=1
 fi
 
-nr_run=3
+nr_run=1
+
+nr_accesses=(
+    1
+    2
+)
+
+sequence_sizes=(
+    2097152
+)
+
+benchs=()
+
+for nr_access in ${nr_accesses[@]}
+do
+    for sequence_size in ${sequence_sizes[@]}
+    do
+	for stride in 1 16 0
+	do
+	    _bench="10000000 1"
+	    for ((i=1; i <= ${nr_access}; i++))
+	    do
+		_bench+=" ${ROOT_DIR}/benchmark_install/input/sequence/sequence_${sequence_size}/sequence_${sequence_size}_${stride}_1.bin"
+	    done
+	    benchs+=("microbe_cache_local_iterator_${nr_access} ${_bench}")
+	done
+
+	_bench="10000000 1"
+	for ((i=1; i <= ${nr_access}; i++))
+	do
+	    _bench+=" ${ROOT_DIR}/benchmark_install/input/sequence/sequence_${sequence_size}/sequence_${sequence_size}_0_0.bin"
+	done
+	benchs+=("microbe_cache_local_iterator_${nr_access} ${_bench}")
+    done
+done
 
 mem_freq=(
     825000000
@@ -69,23 +103,6 @@ big_freq=(
 
 taskmap=0x08
 
-benchs=()
-
-bench_args=(
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_2097152/sequence_2097152_1_1.bin 8161932 1"
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_2097152/sequence_2097152_16_1.bin 8161932 1"
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_2097152/sequence_2097152_0_1.bin 8161932 1"
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_2097152/sequence_2097152_0_0.bin 8161932 1"
-)
-
-for nr_access in {1..1}
-do
-    for bench_arg in "${bench_args[@]}"
-    do
-        benchs+=("microbe_cache_local_iterator_${nr_access} ${bench_arg}")
-    done
-done
-
 for mf in "${mem_freq[@]}"
 do
     for lf in "${little_freq[@]}"
@@ -97,7 +114,7 @@ do
 		for idx_run in $(seq 1 ${nr_run})
 		do
 			freq=$lf
-			config_bench+=("${id_run} ${mf} ${lf} ${bf} ${taskmap} ${bench} ${freq}")
+			config_bench+=("${id_run} ${mf} ${lf} ${bf} ${taskmap} ${freq} ${bench}")
 			id_run=$((id_run + 1))
 		done
 	    done
@@ -150,16 +167,6 @@ big_freq=(
 
 taskmap=0x80
 
-benchs=()
-
-for nr_access in {1..1}
-do
-    for bench_arg in "${bench_args[@]}"
-    do
-        benchs+=("microbe_cache_local_iterator_${nr_access} ${bench_arg}")
-    done
-done
-
 for mf in "${mem_freq[@]}"
 do
     for lf in "${little_freq[@]}"
@@ -171,7 +178,7 @@ do
 		for idx_run in $(seq 1 ${nr_run})
 		    do
 			freq=$bf
-			config_bench+=("${id_run} ${mf} ${lf} ${bf} ${taskmap} ${bench} ${freq}")
+			config_bench+=("${id_run} ${mf} ${lf} ${bf} ${taskmap} ${freq} ${bench}")
 			id_run=$((id_run + 1))
 		done
 	    done

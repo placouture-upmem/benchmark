@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 ROOT_DIR=`pwd`
 
 LOGTRACE_NAME=stress
@@ -22,25 +24,45 @@ taskmap=0x2
 
 benchs=()
 
-bench_args=(
-    # size_t == 8
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_1048576/sequence_1048576_1_1.bin 1000000000 1"
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_1048576/sequence_1048576_8_1.bin 1000000000 1"
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_1048576/sequence_1048576_0_1.bin 1000000000 1"
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_1048576/sequence_1048576_0_0.bin 1000000000 1"
 
-    # size_t == 4
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_2097152/sequence_2097152_1_1.bin 1000000000 1"
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_2097152/sequence_2097152_8_1.bin 1000000000 1"
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_2097152/sequence_2097152_0_1.bin 1000000000 1"
-    "${ROOT_DIR}/benchmark_install/input/sequence/sequence_2097152/sequence_2097152_0_0.bin 1000000000 1"
+# cache line stride = CACHE_LINE_SIZE / sizeof(size_t);
+
+# CACHE_LINE_SIZE = 64 and sizeof(size_t) = 4
+# cache_line_stride=16
+
+# CACHE_LINE_SIZE = 64 and sizeof(size_t) = 8
+cache_line_stride=8
+
+sequence_sizes=(
+    1048576
+    2097152
 )
 
-for nr_access in {1..1}
+nr_accesses=(
+    1
+    2
+)
+
+for nr_access in ${nr_accesses[@]}
 do
-    for bench_arg in "${bench_args[@]}"
+    for sequence_size in ${sequence_sizes[@]}
     do
-	benchs+=("microbe_cache_local_iterator_${nr_access} ${bench_arg}")
+	for stride in 1 ${cache_line_stride} 0
+	do
+	    _bench="10000000 1"
+	    for ((i=1; i <= ${nr_access}; i++))
+	    do
+		_bench+=" ${ROOT_DIR}/benchmark_install/input/sequence/sequence_${sequence_size}/sequence_${sequence_size}_${stride}_1.bin"
+	    done
+	    benchs+=("microbe_cache_local_iterator_${nr_access} ${_bench}")
+	done
+
+	_bench="10000000 1"
+	for ((i=1; i <= ${nr_access}; i++))
+	do
+	    _bench+=" ${ROOT_DIR}/benchmark_install/input/sequence/sequence_${sequence_size}/sequence_${sequence_size}_0_0.bin"
+	done
+	benchs+=("microbe_cache_local_iterator_${nr_access} ${_bench}")
     done
 done
 
@@ -49,7 +71,7 @@ do
     for idx_run in $(seq 1 ${nr_run})
     do
 	freq=1
-	config_bench+=("${id_run} ${taskmap} ${bench} ${freq}")
+	config_bench+=("${id_run} ${taskmap} ${freq} ${bench}")
 	id_run=$((id_run + 1))
     done
 done
