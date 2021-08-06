@@ -99,8 +99,6 @@ int main(int argc, char *argv[]) {
 
 	unsigned int cpu_freq = atoi(argv[1]);
 
-	int ret = 0;
-
 	mym4for(`i', `1', ACCESS_REQ, +1, `format(`
 	size_t *arr_n_ptr_%d = NULL;
 
@@ -134,14 +132,14 @@ int main(int argc, char *argv[]) {
 	/* arr_n_ptr_%d = (size_t *) malloc(array_size * sizeof(size_t)); */
 
 	void *p_%d = NULL;
-	ret = posix_memalign(&p_%d, PAGE_SIZE,
-			     array_size * sizeof(size_t));
+	int ret_%d = posix_memalign(&p_%d, PAGE_SIZE,
+				    array_size * sizeof(size_t));
 
-	if ((ret != 0) | (p_%d == NULL)) {
+	if ((ret_%d != 0) | (p_%d == NULL)) {
 		char error_msg[128];
 		snprintf(error_msg, sizeof error_msg,
 			 "alloc p_%d");
-		handle_error_en(ret, error_msg);
+		handle_error_en(ret_%d, error_msg);
 	}
 
 	arr_n_ptr_%d = p_%d;
@@ -163,7 +161,7 @@ int main(int argc, char *argv[]) {
 	fclose(sequence_%d);
 	printf("preparation done\n");
 
-	', i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i)')
+	', i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i)')
 
 	printf("sizeof(size_t) = %zu\n", sizeof(size_t));
 	printf("array_size = %zu\n", array_size);
