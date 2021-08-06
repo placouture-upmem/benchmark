@@ -133,16 +133,18 @@ int main(int argc, char *argv[]) {
 
 	/* arr_n_ptr_%d = (size_t *) malloc(array_size * sizeof(size_t)); */
 
-	ret = posix_memalign((void **)&arr_n_ptr_%d, PAGE_SIZE,
+	void *p_%d = NULL;
+	ret = posix_memalign(&p_%d, PAGE_SIZE,
 			     array_size * sizeof(size_t));
 
-	if ((ret != 0) | (arr_n_ptr_%d == NULL)) {
+	if ((ret != 0) | (p_%d == NULL)) {
 		char error_msg[128];
 		snprintf(error_msg, sizeof error_msg,
-			 "alloc arr_n_ptr_%d");
+			 "alloc p_%d");
 		handle_error_en(ret, error_msg);
 	}
 
+	arr_n_ptr_%d = p_%d;
 	memset(arr_n_ptr_%d, SIZE_MAX, array_size * sizeof(size_t));
 
 	if (stride == 0) {
@@ -161,7 +163,7 @@ int main(int argc, char *argv[]) {
 	fclose(sequence_%d);
 	printf("preparation done\n");
 
-	', i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i)')
+	', i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i, i)')
 
 	printf("sizeof(size_t) = %zu\n", sizeof(size_t));
 	printf("array_size = %zu\n", array_size);
