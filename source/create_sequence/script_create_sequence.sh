@@ -32,3 +32,6 @@ function work() {
 export -f work
 
 parallel work ::: ${sizes[@]}
+
+mkdir -p benchmark_install/human_readable_sequence_input/
+find benchmark_install/input/ -name "*.txt" -exec mv -t benchmark_install/human_readable_sequence_input/ {} +
