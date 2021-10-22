@@ -16,7 +16,10 @@ if(ipo_supported)
     TARGET ${target}
     PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
 endif()
-# target_compile_definitions(${target} PUBLIC DEBUG)
+target_compile_definitions(${target} PUBLIC
+  # PRODUCE_HUMAN_READABLE_LOCATION_FILE
+  # DEBUG
+  )
 target_compile_options(${target} PUBLIC
   -std=c99 -Wall -Wextra -Wshadow -pedantic
   -Ofast -march=native)

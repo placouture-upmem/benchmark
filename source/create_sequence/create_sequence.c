@@ -299,11 +299,9 @@ int main(int argc, char *argv[])
 	FILE *fd_sequence;
 #ifdef PRODUCE_HUMAN_READABLE_LOCATION_FILE
 	FILE *fd_sequence_location;
+	size_t last_idx;
 #endif /* PRODUCE_HUMAN_READABLE_LOCATION_FILE */
 
-	size_t last_idx;
-
-	SIZE_T_BASE_TYPE *array;
 	SIZE_T_BASE_TYPE _array_size;
 	SIZE_T_BASE_TYPE _stride;
 	SIZE_T_BASE_TYPE _page_stride;
@@ -325,8 +323,6 @@ int main(int argc, char *argv[])
 	if (fwrite(&_page_stride, sizeof(SIZE_T_BASE_TYPE), 1, fd_sequence) < 1)
 		handle_perror("fwrite page_stride");
 	fclose(fd_sequence);
-
-
 
 	stride = CACHE_LINE_SIZE / sizeof(SIZE_T_BASE_TYPE);
 
@@ -464,47 +460,6 @@ int main(int argc, char *argv[])
 	printf("randomise inpage done\n");
 
 	printf("writing files\n");
-	printf("allocating dumping array\n");
-	array = malloc(array_size * sizeof(SIZE_T_BASE_TYPE));
-	if (!array)
-		handle_perror("malloc array");
-	memset(array, 0, array_size * sizeof(SIZE_T_BASE_TYPE));
-	printf("allocating dumping array done\n");
-
-#ifdef PRODUCE_HUMAN_READABLE_LOCATION_FILE
-	snprintf(filename, sizeof(filename), "sequence_%zu_%zu_%zu.txt", array_size, stride, page_stride);
-	fd_sequence = fopen(filename, "w");
-	if (!fd_sequence)
-		handle_perror("fopen sequence");
-
-	snprintf(filename, sizeof(filename), "sequence_%zu_%zu_%zu_location.txt", array_size, stride, page_stride);
-	fd_sequence_location = fopen(filename, "w");
-	if (!fd_sequence)
-		handle_perror("fopen sequence");
-
-	fprintf(fd_sequence, "%zu %zu %zu\n", array_size, stride, page_stride);
-#endif /* PRODUCE_HUMAN_READABLE_LOCATION_FILE */
-
-	last_idx = 0;
-	for (size_t idx = 0; idx < nr_cache_line; idx++) {
-		size_t next_idx_byte = location_to_byte(&mem[idx]);
-		size_t next_idx = next_idx_byte / sizeof(SIZE_T_BASE_TYPE);
-
-		array[last_idx] = next_idx;
-
-#ifdef PRODUCE_HUMAN_READABLE_LOCATION_FILE
-		fprintf(fd_sequence, "%zu %zu\n", last_idx, next_idx);
-		fprintf(fd_sequence_location, "%zu %zu %zu %zu %zu %zu %zu\n",
-			idx, mem[idx].pgd, mem[idx].p4d, mem[idx].pud, mem[idx].pmd, mem[idx].pte, mem[idx].cl);
-#endif /* PRODUCE_HUMAN_READABLE_LOCATION_FILE */
-
-		last_idx = next_idx;
-	}
-
-#ifdef PRODUCE_HUMAN_READABLE_LOCATION_FILE
-	fclose(fd_sequence);
-	fclose(fd_sequence_location);
-#endif /* PRODUCE_HUMAN_READABLE_LOCATION_FILE */
 
 	snprintf(filename, sizeof(filename), "sequence_%zu_%zu_%zu.bin", array_size, stride, page_stride);
 	fd_sequence = fopen(filename, "wb");
@@ -523,11 +478,39 @@ int main(int argc, char *argv[])
 	if (fwrite(&_page_stride, sizeof(SIZE_T_BASE_TYPE), 1, fd_sequence) < 1)
 		handle_perror("fwrite page_stride");
 
-	if (fwrite(array, sizeof(SIZE_T_BASE_TYPE), array_size, fd_sequence) < array_size)
-		handle_perror("fwrite array");
+#ifdef PRODUCE_HUMAN_READABLE_LOCATION_FILE
+	snprintf(filename, sizeof(filename), "sequence_%zu_%zu_%zu_location.txt", array_size, stride, page_stride);
+	fd_sequence_location = fopen(filename, "w");
+	if (!fd_sequence)
+		handle_perror("fopen sequence");
+
+	last_idx = 0;
+#endif /* PRODUCE_HUMAN_READABLE_LOCATION_FILE */
+
+	size_t cache_line[CACHE_LINE_SIZE / sizeof(SIZE_T_BASE_TYPE)];
+	memset(cache_line, 0, sizeof cache_line);
+
+	for (size_t idx = 0; idx < nr_cache_line; idx++) {
+		size_t next_idx_byte = location_to_byte(&mem[idx]);
+		size_t next_idx = next_idx_byte / sizeof(SIZE_T_BASE_TYPE);
+
+		cache_line[0] = next_idx;
+		if (fwrite(cache_line, sizeof(SIZE_T_BASE_TYPE), CACHE_LINE_SIZE / sizeof(SIZE_T_BASE_TYPE), fd_sequence) < 1)
+			handle_perror("fwrite array computed idx");
+
+#ifdef PRODUCE_HUMAN_READABLE_LOCATION_FILE
+		fprintf(fd_sequence_location, "%zu %zu %zu %zu %zu %zu %zu %zu %zu\n",
+			idx, mem[idx].pgd, mem[idx].p4d, mem[idx].pud, mem[idx].pmd, mem[idx].pte, mem[idx].cl, last_idx, next_idx);
+
+		last_idx = next_idx;
+#endif /* PRODUCE_HUMAN_READABLE_LOCATION_FILE */
+	}
+
+#ifdef PRODUCE_HUMAN_READABLE_LOCATION_FILE
+	fclose(fd_sequence_location);
+#endif /* PRODUCE_HUMAN_READABLE_LOCATION_FILE */
 
 	fclose(fd_sequence);
-	free(array);
 
 	printf("done random inpage\n");
 	/* getchar(); */
@@ -740,47 +723,6 @@ int main(int argc, char *argv[])
 	}
 
 	printf("writing files\n");
-	printf("allocating dumping array\n");
-	array = malloc(array_size * sizeof(SIZE_T_BASE_TYPE));
-	if (!array)
-		handle_perror("malloc array");
-	memset(array, 0, array_size * sizeof(SIZE_T_BASE_TYPE));
-	printf("allocating dumping array done\n");
-
-#ifdef PRODUCE_HUMAN_READABLE_LOCATION_FILE
-	snprintf(filename, sizeof(filename), "sequence_%zu_%zu_%zu.txt", array_size, stride, page_stride);
-	fd_sequence = fopen(filename, "w");
-	if (!fd_sequence)
-		handle_perror("fopen sequence");
-
-	snprintf(filename, sizeof(filename), "sequence_%zu_%zu_%zu_location.txt", array_size, stride, page_stride);
-	fd_sequence_location = fopen(filename, "w");
-	if (!fd_sequence)
-		handle_perror("fopen sequence");
-
-	fprintf(fd_sequence, "%zu %zu %zu\n", array_size, stride, page_stride);
-#endif /* PRODUCE_HUMAN_READABLE_LOCATION_FILE */
-
-	last_idx = 0;
-	for (size_t idx = 0; idx < nr_cache_line; idx++) {
-		size_t next_idx_byte = location_to_byte(&mem[idx]);
-		size_t next_idx = next_idx_byte / sizeof(SIZE_T_BASE_TYPE);
-
-		array[last_idx] = next_idx;
-
-#ifdef PRODUCE_HUMAN_READABLE_LOCATION_FILE
-		fprintf(fd_sequence, "%zu %zu\n", last_idx, next_idx);
-		fprintf(fd_sequence_location, "%zu %zu %zu %zu %zu %zu %zu\n",
-			idx, mem[idx].pgd, mem[idx].p4d, mem[idx].pud, mem[idx].pmd, mem[idx].pte, mem[idx].cl);
-#endif /* PRODUCE_HUMAN_READABLE_LOCATION_FILE */
-
-		last_idx = next_idx;
-	}
-
-#ifdef PRODUCE_HUMAN_READABLE_LOCATION_FILE
-	fclose(fd_sequence);
-	fclose(fd_sequence_location);
-#endif /* PRODUCE_HUMAN_READABLE_LOCATION_FILE */
 
 	snprintf(filename, sizeof(filename), "sequence_%zu_%zu_%zu.bin", array_size, stride, page_stride);
 	fd_sequence = fopen(filename, "wb");
@@ -799,11 +741,36 @@ int main(int argc, char *argv[])
 	if (fwrite(&_page_stride, sizeof(SIZE_T_BASE_TYPE), 1, fd_sequence) < 1)
 		handle_perror("fwrite page_stride");
 
-	if (fwrite(array, sizeof(SIZE_T_BASE_TYPE), array_size, fd_sequence) < array_size)
-		handle_perror("fwrite array");
+#ifdef PRODUCE_HUMAN_READABLE_LOCATION_FILE
+	snprintf(filename, sizeof(filename), "sequence_%zu_%zu_%zu_location.txt", array_size, stride, page_stride);
+	fd_sequence_location = fopen(filename, "w");
+	if (!fd_sequence)
+		handle_perror("fopen sequence");
+
+	last_idx = 0;
+#endif /* PRODUCE_HUMAN_READABLE_LOCATION_FILE */
+
+	for (size_t idx = 0; idx < nr_cache_line; idx++) {
+		size_t next_idx_byte = location_to_byte(&mem[idx]);
+		size_t next_idx = next_idx_byte / sizeof(SIZE_T_BASE_TYPE);
+
+		cache_line[0] = next_idx;
+		if (fwrite(cache_line, sizeof(SIZE_T_BASE_TYPE), CACHE_LINE_SIZE / sizeof(SIZE_T_BASE_TYPE), fd_sequence) < 1)
+			handle_perror("fwrite array computed idx");
+
+#ifdef PRODUCE_HUMAN_READABLE_LOCATION_FILE
+		fprintf(fd_sequence_location, "%zu %zu %zu %zu %zu %zu %zu %zu %zu\n",
+			idx, mem[idx].pgd, mem[idx].p4d, mem[idx].pud, mem[idx].pmd, mem[idx].pte, mem[idx].cl, last_idx, next_idx);
+
+		last_idx = next_idx;
+#endif /* PRODUCE_HUMAN_READABLE_LOCATION_FILE */
+	}
+
+#ifdef PRODUCE_HUMAN_READABLE_LOCATION_FILE
+	fclose(fd_sequence_location);
+#endif /* PRODUCE_HUMAN_READABLE_LOCATION_FILE */
 
 	fclose(fd_sequence);
-	free(array);
 
 	free(mem);
 
