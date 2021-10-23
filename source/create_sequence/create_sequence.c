@@ -28,15 +28,10 @@
 	} while (0)
 
 
-/* #define SIZE_T_BASE_TYPE size_t */
-/* #define SIZE_T_BASE_TYPE uint16_t */
-/* #define SIZE_T_BASE_TYPE uint32_t */
-/* #define SIZE_T_BASE_TYPE uint64_t */
-
-#define CACHE_LINE_SIZE 64
-#define PAGE_SIZE 4096
-
 /* /\* arm 32bits without LPAE *\/ */
+/* #define SIZE_T_BASE_TYPE uint32_t */
+/* #define CACHE_LINE_SIZE 64 */
+/* #define PAGE_SIZE 4096 */
 /* #define PTRS_PER_PTE 512 */
 /* #define PTRS_PER_PMD 1 */
 /* #define PTRS_PER_PUD 1 */
@@ -44,6 +39,9 @@
 /* #define PTRS_PER_PGD 2048 */
 
 /* /\* arm 32bits with LPAE *\/ */
+/* #define SIZE_T_BASE_TYPE uint32_t */
+/* #define CACHE_LINE_SIZE 64 */
+/* #define PAGE_SIZE 4096 */
 /* #define PTRS_PER_PTE 512 */
 /* #define PTRS_PER_PMD 512 */
 /* #define PTRS_PER_PUD 1 */
@@ -51,44 +49,62 @@
 /* #define PTRS_PER_PGD 4 */
 
 /* /\* arm 64bits *\/ */
+/* #define SIZE_T_BASE_TYPE uint64_t */
 /* #define PAGE_SHIFT 12 */
+
+/* #define CACHE_LINE_SIZE 64 */
+
+/* #define PAGE_SIZE 4096 /\* 4KB *\/ */
+/* #define VA_BITS 39 */
+/* #define CONFIG_PGTABLE_LEVELS 3 */
+
+/* #define PAGE_SIZE 4096 */
 /* #define VA_BITS 48 */
 /* #define CONFIG_PGTABLE_LEVELS 4 */
+
+/* #define PAGE_SIZE 65536 /\* 64KB *\/ */
+/* #define VA_BITS 48 */
+/* #define CONFIG_PGTABLE_LEVELS 3 */
+
+/* #define PAGE_SIZE 65536 /\* 64KB *\/ */
+/* #define VA_BITS 52 */
+/* #define CONFIG_PGTABLE_LEVELS 3 */
 
 /* #define ARM64_HW_PGTABLE_LEVEL_SHIFT(n)	((PAGE_SHIFT - 3) * (4 - (n)) + 3) */
 /* #define PGDIR_SHIFT ARM64_HW_PGTABLE_LEVEL_SHIFT(4 - CONFIG_PGTABLE_LEVELS) */
 
 /* #define PTRS_PER_PTE		(1 << (PAGE_SHIFT - 3)) */
+
+/* #if CONFIG_PGTABLE_LEVELS > 2 */
 /* #define PTRS_PER_PMD		PTRS_PER_PTE */
+/* #else */
+/* #define PTRS_PER_PMD		1 */
+/* #endif */
+
+/* #if CONFIG_PGTABLE_LEVELS > 3 */
 /* #define PTRS_PER_PUD		PTRS_PER_PTE */
+/* #else */
+/* #define PTRS_PER_PUD		1 */
+/* #endif */
+
 /* #define PTRS_PER_P4D		1 */
+
 /* #define PTRS_PER_PGD		(1 << (VA_BITS - PGDIR_SHIFT)) */
 
+
 #define NR_LAST_PAGE_ENTRY_TO_AVOID 0
-
-/* A7 micro TLB */
-/* #define NR_LAST_PAGE_ENTRY_TO_AVOID 10 */
-
-/* A7 main TLB */
-/* #define NR_LAST_PAGE_ENTRY_TO_AVOID 512 */
-
-/* A15 L1 data load TLB */
-/* #define NR_LAST_PAGE_ENTRY_TO_AVOID 32 */
-
-/* A15 L2 TLB */
-/* #define NR_LAST_PAGE_ENTRY_TO_AVOID 2048 */
 
 #define CACHE_LINE_PER_PAGE (PAGE_SIZE / CACHE_LINE_SIZE)
 
 /* #define PRODUCE_HUMAN_READABLE_LOCATION_FILE */
 
 struct location {
-	size_t cl;
-	size_t pte;
-	size_t pmd;
-	size_t pud;
-	size_t p4d;
-	size_t pgd;
+	unsigned short int cl;
+	unsigned short int pte;
+	unsigned short int pmd;
+	unsigned short int pud;
+	unsigned short int p4d;
+	unsigned int pgd;
 };
 
 size_t location_to_byte(struct location *l)
@@ -103,7 +119,7 @@ size_t location_to_byte(struct location *l)
 
 void location_print(struct location *l)
 {
-	printf("%zu %zu %zu %zu %zu %zu",
+	printf("%u %hu %hu %hu %hu %hu",
 	       l->pgd, l->p4d, l->pud, l->pmd, l->pte, l->cl);
 }
 
@@ -356,12 +372,12 @@ int main(int argc, char *argv[])
 	if (!mem)
 		handle_perror("malloc");
 
-	size_t idx_cl = 0;
-	size_t idx_pte = 0;
-	size_t idx_pmd = 0;
-	size_t idx_pud = 0;
-	size_t idx_p4d = 0;
-	size_t idx_pgd = 0;
+	unsigned short int idx_cl = 0;
+	unsigned short int idx_pte = 0;
+	unsigned short int idx_pmd = 0;
+	unsigned short int idx_pud = 0;
+	unsigned short int idx_p4d = 0;
+	unsigned int idx_pgd = 0;
 
 	for (size_t idx = 0; idx < nr_cache_line; idx++) {
 		mem[idx].cl = idx_cl;
@@ -499,7 +515,7 @@ int main(int argc, char *argv[])
 			handle_perror("fwrite array computed idx");
 
 #ifdef PRODUCE_HUMAN_READABLE_LOCATION_FILE
-		fprintf(fd_sequence_location, "%zu %zu %zu %zu %zu %zu %zu %zu %zu\n",
+		fprintf(fd_sequence_location, "%zu %u %hu %hu %hu %hu %hu %zu %zu\n",
 			idx, mem[idx].pgd, mem[idx].p4d, mem[idx].pud, mem[idx].pmd, mem[idx].pte, mem[idx].cl, last_idx, next_idx);
 
 		last_idx = next_idx;
@@ -759,7 +775,7 @@ int main(int argc, char *argv[])
 			handle_perror("fwrite array computed idx");
 
 #ifdef PRODUCE_HUMAN_READABLE_LOCATION_FILE
-		fprintf(fd_sequence_location, "%zu %zu %zu %zu %zu %zu %zu %zu %zu\n",
+		fprintf(fd_sequence_location, "%zu %u %hu %hu %hu %hu %hu %zu %zu\n",
 			idx, mem[idx].pgd, mem[idx].p4d, mem[idx].pud, mem[idx].pmd, mem[idx].pte, mem[idx].cl, last_idx, next_idx);
 
 		last_idx = next_idx;
