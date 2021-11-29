@@ -238,7 +238,7 @@ int main(int argc, char *argv[]) {
 	FILE *sequence_%d_%d = fopen(argv[1], "rb");
 	if (!sequence_%d_%d) {
 		char error_msg[128];
-		snprintf(error_msg, sizeof error_msg, "%s", argv[1]);
+		snprintf(error_msg, sizeof error_msg, "%%s", argv[1]);
 		handle_perror(error_msg);
 	}
 
@@ -249,22 +249,23 @@ int main(int argc, char *argv[]) {
 	if (fread(&page_stride, sizeof(size_t), 1, sequence_%d_%d) < 1) 
 		handle_perror("fread page_stride");
 
-	printf("preparing arr_n_ptr_%d_%d of size %s, stride %s, page_stride %s\n", array_size, stride, page_stride);
+	printf("preparing arr_n_ptr_%d_%d of size %%zu, stride %%zu, page_stride %%zu\n", array_size, stride, page_stride);
 
 	printf("allocation\n");
 
 	/* arr_n_ptr_%d_%d = (size_t *) malloc(array_size * sizeof(size_t)); */
 
-	ret = posix_memalign((void **)&arr_n_ptr_%d_%d, PAGE_SIZE,
+	void *p_%d_%d = NULL;
+	ret = posix_memalign(p_%d_%d, PAGE_SIZE,
 			     array_size * sizeof(size_t));
 
-	if ((ret != 0) | (arr_n_ptr_%d_%d == NULL)) {
+	if ((ret != 0) | (p_%d_%d == NULL)) {
 		char error_msg[128];
 		snprintf(error_msg, sizeof error_msg,
-			 "alloc arr_n_ptr_%d_%d");
+			 "alloc p_%d_%d");
 		handle_error_en(ret, error_msg);
 	}
-
+	arr_n_ptr_%d_%d = p_%d_%d;
 	memset(arr_n_ptr_%d_%d, SIZE_MAX, array_size * sizeof(size_t));
 
 	if (stride == 0) {
@@ -274,7 +275,7 @@ int main(int argc, char *argv[]) {
 	} else {
 		printf("Init array\n");
 		for (size_t idx = 0; idx < array_size; idx++) {
-			arr_n_ptr_%d_%d[idx %s array_size] = (idx + stride) %s array_size;
+			arr_n_ptr_%d_%d[idx %% array_size] = (idx + stride) %% array_size;
 		}
 	}
 
@@ -283,22 +284,10 @@ int main(int argc, char *argv[]) {
 	fclose(sequence_%d_%d);
 	printf("preparation done\n");
 
-	', th_idx, i,
-	   th_idx, i,
-	   th_idx, i,
-	   %s,
-	   th_idx, i,
-	   th_idx, i,
-	   th_idx, i,
-	   th_idx, i, %zu, %zu, %zu,
-	   th_idx, i,
-	   th_idx, i,
-	   th_idx, i,
-	   th_idx, i,
-	   th_idx, i,
-	   th_idx, i, th_idx, i,
-	   th_idx, i, %, %,
-	   th_idx, i)')')
+	', th_idx, i, th_idx, i, th_idx, i, th_idx, i, th_idx, i,
+	   th_idx, i, th_idx, i, th_idx, i, th_idx, i, th_idx, i,
+	   th_idx, i, th_idx, i, th_idx, i, th_idx, i, th_idx, i,
+	   th_idx, i, th_idx, i, th_idx, i, th_idx, i)')')
 
 	printf("sizeof(size_t) = %zu\n", sizeof(size_t));
 	printf("array_size = %zu\n", array_size);
