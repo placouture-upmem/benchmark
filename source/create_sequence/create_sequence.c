@@ -27,6 +27,16 @@
 		exit(EXIT_FAILURE);			\
 	} while (0)
 
+/* /\* Intel x86_64 with 4-level paging *\/ */
+
+/* #define SIZE_T_BASE_TYPE uint64_t */
+/* #define CACHE_LINE_SIZE  64 */
+/* #define PAGE_SIZE        4096 \/* 4KB *\/ */
+/* #define PTRS_PER_PTE     512 */
+/* #define PTRS_PER_PMD     512 */
+/* #define PTRS_PER_PUD     512 */
+/* #define PTRS_PER_P4D     1 */
+/* #define PTRS_PER_PGD     512 */
 
 /* /\* arm 32bits without LPAE *\/ */
 /* #define SIZE_T_BASE_TYPE uint32_t */
