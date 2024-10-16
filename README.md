@@ -32,3 +32,4 @@ Simply clone, build and run:
 * sudo
 * Python 3+
 * gnuplot
+* (GNU) time

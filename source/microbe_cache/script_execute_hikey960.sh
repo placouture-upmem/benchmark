@@ -81,7 +81,7 @@ function run_benchmark()
 	(
 	    mkdir ${LOGTRACE_DIR}/${row_insertion}/output
 	    cd ${LOGTRACE_DIR}/${row_insertion}/output
-	    taskset ${taskmap} /usr/bin/time -v -p bash ${script} > 00_stdout 2> 00_stderr
+	    taskset ${taskmap} time -v -p bash ${script} > 00_stdout 2> 00_stderr
 	)
 
 	rm ${script}
